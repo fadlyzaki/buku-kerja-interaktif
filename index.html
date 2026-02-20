@@ -1,0 +1,2590 @@
+<!DOCTYPE html>
+<html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Interactive Workbook - Rumbel Geera</title>
+        <!-- UI Libraries -->
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Nunito:wght@400;600&display=swap" rel="stylesheet">
+        <!-- Favicon -->
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦉</text></svg>" type="image/svg+xml">
+        <!-- Firebase (v10 Modular SDK) -->
+        <script type="module">
+            // Import Firebase services
+            import {initializeApp} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+            import {getFirestore, serverTimestamp, addDoc, collection, doc, setDoc} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+            import {getAuth, signInAnonymously, onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+
+            // IMPORTANT: Replace with your actual Firebase project configuration
+            // const firebaseConfig = {
+            //     apiKey: "YOUR_API_KEY",
+            //     authDomain: "YOUR_AUTH_DOMAIN",
+            //     projectId: "YOUR_PROJECT_ID",
+            //     storageBucket: "YOUR_STORAGE_BUCKET",
+            //     messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            //     appId: "YOUR_APP_ID",
+            //     measurementId: "YOUR_MEASUREMENT_ID"
+            // };
+
+            // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+            const firebaseConfig = {
+                apiKey: "AIzaSyD8iWDWdcJuAvUJ-1432mDSYRuTeXtkiys",
+                authDomain: "buku-kerja-interaktif.firebaseapp.com",
+                projectId: "buku-kerja-interaktif",
+                storageBucket: "buku-kerja-interaktif.firebasestorage.app",
+                messagingSenderId: "1012608369145",
+                appId: "1:1012608369145:web:0b6d86f1cc41e965497d28",
+                measurementId: "G-48JLEE5KCW"
+            };
+
+            // Initialize Firebase
+            try {
+                const app = initializeApp(firebaseConfig);
+                const db = getFirestore(app);
+                const auth = getAuth(app);
+
+                // Sign in anonymously to get a user ID for data tracking
+                signInAnonymously(auth).catch(console.error);
+
+                // Expose Firebase functions to be used by the main application script
+                window.__fb = {
+                    db,
+                    serverTimestamp,
+                    addDoc,
+                    collection,
+                    auth,
+                    onAuthStateChanged,
+                    doc,
+                    setDoc
+                };
+            } catch (e) {
+                console.error("Firebase initialization error. Please check your firebaseConfig.", e);
+                // Optionally, display a message to the user on the page
+                document.body.innerHTML = '<div style="padding: 2rem; text-align: center; font-family: sans-serif;"><h1>Configuration Error</h1><p>Could not connect to the database. Please ensure your Firebase configuration is correct and try again.</p></div>';
+            }
+        </script>
+        <!-- Application Styles -->
+        <style>
+            body {
+                font-family: 'Nunito', sans-serif;
+            }
+
+            h1, h2, h3, h4, b, strong {
+                font-family: 'Poppins', sans-serif;
+            }
+
+            .main-content > div {
+                display: none;
+            }
+
+            .main-content > div.active {
+                display: block;
+            }
+
+            .nav-link.active {
+                background-color: #58a700;
+                color: white;
+            }
+
+            .star-rating span {
+                cursor: pointer;
+                transition: color 0.2s;
+            }
+
+            #toast {
+                transition: opacity 0.5s, transform 0.5s;
+            }
+
+            .dialogue-practice-area {
+                scroll-behavior: smooth;
+            }
+
+            .lang-en {
+                display: none;
+            }
+
+            .lang-id {
+                display: inline;
+            }
+
+            body.en .lang-en {
+                display: inline;
+            }
+
+            body.en .lang-id {
+                display: none;
+            }
+
+            body.en #home .lang-id {
+                display: none;
+            }
+
+            body.en #home .lang-en {
+                display: block;
+            }
+
+            .lang-switch-btn.active {
+                background-color: #78C800;
+                color: white;
+                box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            }
+
+            .teacher-score-box {
+                display: none;
+            }
+
+            body.teacher-mode .teacher-score-box {
+                display: block;
+            }
+        </style>
+    </head>
+    <body class="bg-gray-50 text-gray-800">
+        <div id="app" class="flex flex-col md:flex-row min-h-screen">
+            <nav class="w-full md:w-64 bg-white md:border-r border-gray-200 flex-shrink-0">
+                <div class="p-4 border-b flex items-center justify-between">
+                    <a href="#" data-target="home" class="flex items-center space-x-3 nav-link-header">
+                        <div class="text-3xl">🦉</div>
+                        <h1 class="text-lg font-bold text-gray-700">Interactive Workbook</h1>
+                    </a>
+                    <button id="menu-toggle" class="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100">
+                        <span class="text-2xl">☰</span>
+                    </button>
+                </div>
+                <div id="nav-links" class="hidden md:block">
+                    <div class="p-2">
+                        <ul>
+                            <li>
+                                <a href="#" data-target="home" class="nav-link active flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <span>🏠</span>
+                                    <span>
+                                        <span class="lang-id">Selamat Datang</span>
+                                        <span class="lang-en">Welcome</span>
+                                    </span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" data-target="pretest" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <span>📝</span>
+                                    <span>
+                                        <span class="lang-id">Pre-Test</span>
+                                        <span class="lang-en">Pre-Test</span>
+                                    </span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" data-target="motivation" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <span>💪</span>
+                                    <span>
+                                        <span class="lang-id">Tingkat Motivasi</span>
+                                        <span class="lang-en">Motivation Level</span>
+                                    </span>
+                                </a>
+                            </li>
+                            <li class="mt-4 px-3 text-sm font-semibold text-gray-500 uppercase">Units</li>
+                            <li>
+                                <a href="#" data-target="unit1" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <span>🧠</span>
+                                    <span>
+                                        Unit 1: <span class="lang-id">Orientasi</span>
+                                        <span class="lang-en">Orientation</span>
+                                    </span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" data-target="unit2" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <span>🙋‍♀️</span>
+                                    <span>
+                                        Unit 2: <span class="lang-id">Perkenalan</span>
+                                        <span class="lang-en">Introduction</span>
+                                    </span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" data-target="unit3" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <span>☀️</span>
+                                    <span>
+                                        Unit 3: <span class="lang-id">Rutinitas</span>
+                                        <span class="lang-en">Routines</span>
+                                    </span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" data-target="unit4" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <span>🏫</span>
+                                    <span>
+                                        Unit 4: <span class="lang-id">Sekolah</span>
+                                        <span class="lang-en">School</span>
+                                    </span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" data-target="unit5" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <span>🍔</span>
+                                    <span>
+                                        Unit 5: <span class="lang-id">Makanan</span>
+                                        <span class="lang-en">Food</span>
+                                    </span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" data-target="unit6" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <span>🎮</span>
+                                    <span>
+                                        Unit 6: <span class="lang-id">Hobi</span>
+                                        <span class="lang-en">Hobbies</span>
+                                    </span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" data-target="unit7" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <span>🏛️</span>
+                                    <span>
+                                        Unit 7: <span class="lang-id">Tempat</span>
+                                        <span class="lang-en">Places</span>
+                                    </span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" data-target="unit8" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <span>👋</span>
+                                    <span>
+                                        Unit 8: <span class="lang-id">Ulasan</span>
+                                        <span class="lang-en">Review</span>
+                                    </span>
+                                </a>
+                            </li>
+                        </ul>
+                        <div id="teacher-section" style="display: none;">
+                            <ul>
+                                <li class="mt-4 px-3 text-sm font-semibold text-gray-500 uppercase">
+                                    <span class="lang-id">Tambahan</span>
+                                    <span class="lang-en">Extras</span>
+                                </li>
+                                <li>
+                                    <a href="#" data-target="tracker" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                        <span>🎯</span>
+                                        <span>
+                                            <span class="lang-id">Pelacak & Laporan</span>
+                                            <span class="lang-en">Tracker & Reports</span>
+                                        </span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <button id="exit-teacher-mode-btn" class="w-full mt-2 flex items-center space-x-3 p-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors">
+                                        <span>
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"/>
+                                            </svg>
+                                        </span>
+                                        <span>
+                                            <span class="lang-id">Keluar Mode Guru</span>
+                                            <span class="lang-en">Exit Teacher Mode</span>
+                                        </span>
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div id="student-display" class="p-4 border-t text-center" style="display: none;">
+                        <span class="text-sm font-semibold text-gray-600">
+                            <span class="lang-id">Siswa</span>
+                            <span class="lang-en">Student</span>
+                            :
+                        </span>
+                        <p id="student-name-display" class="font-bold text-lg text-[#58a700]"></p>
+                        <p id="student-class-display" class="text-sm text-gray-600"></p>
+                        <button id="change-student" class="text-xs text-blue-600 hover:underline mt-1">
+                            <span class="lang-id">Ganti Nama</span>
+                            <span class="lang-en">Change Name</span>
+                        </button>
+                    </div>
+                    <div id="teacher-login-container" class="p-4 text-center border-t">
+                        <button id="teacher-mode-btn" class="text-xs text-gray-500 hover:underline">
+                            <span class="lang-id">Masuk Mode Guru</span>
+                            <span class="lang-en">Teacher Mode</span>
+                        </button>
+                    </div>
+                </div>
+            </nav>
+            <main class="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
+                <div class="flex justify-center mb-6">
+                    <div class="bg-gray-200 rounded-full p-1 flex space-x-1">
+                        <button id="lang-btn-id" class="lang-switch-btn px-4 py-1 text-sm font-semibold rounded-full">Indonesia</button>
+                        <button id="lang-btn-en" class="lang-switch-btn px-4 py-1 text-sm font-semibold rounded-full">English</button>
+                    </div>
+                </div>
+                <div class="main-content">
+                    <div id="pretest">
+                        <h2 class="text-2xl md:text-3xl font-bold text-[#78C800]">📝 Pre-Test</h2>
+                        <p class="mt-2 text-gray-600">
+                            <span class="lang-id">Kerjakan soal-soal di bawah ini untuk mengukur pemahaman awalmu. Jawabanmu akan tersimpan otomatis.</span>
+                            <span class="lang-en">Complete the questions below to measure your initial understanding. Your answers will be saved automatically.</span>
+                        </p>
+                        <form id="pretest-form">
+                            <div id="pretest-questions-container" class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200 space-y-8">
+                            <!-- Pre-test questions will be dynamically inserted here -->
+                            </div>
+                            <button type="submit" id="submit-pretest-btn" class="mt-8 w-full md:w-auto bg-[#78C800] text-white font-bold py-3 px-6 rounded-lg hover:bg-[#58a700] transition-colors flex items-center justify-center space-x-2">
+                                <span>💾</span>
+                                <span>
+                                    <span class="lang-id">Kirim Jawaban Pre-Test</span>
+                                    <span class="lang-en">Submit Pre-Test Answers</span>
+                                </span>
+                            </button>
+                        </form>
+                        <div id="pretest-complete-view" style="display: none;" class="mt-8 p-8 bg-white rounded-xl shadow-md border border-gray-200 text-center">
+                            <div class="text-6xl">🎉</div>
+                            <h3 class="text-2xl font-bold text-gray-800 mt-4">
+                                <span class="lang-id">Selamat!</span>
+                                <span class="lang-en">Congratulations!</span>
+                            </h3>
+                            <p class="mt-2 text-gray-600">
+                                <span class="lang-id">Kamu telah menyelesaikan Pre-Test. Jawabanmu telah berhasil disimpan.</span>
+                                <span class="lang-en">You have completed the Pre-Test. Your answers have been saved successfully.</span>
+                            </p>
+                            <button id="back-to-home-btn" class="mt-6 bg-[#78C800] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#58a700] transition-colors">
+                                <span class="lang-id">Kembali ke Halaman Utama</span>
+                                <span class="lang-en">Back to Home</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="motivation">
+                        <h2 class="text-2xl md:text-3xl font-bold text-[#78C800]">
+                            💪 <span class="lang-id">Kuesioner Tingkat Motivasi</span>
+                            <span class="lang-en">Motivation Level Questionnaire</span>
+                        </h2>
+                        <p class="mt-2 text-gray-600">
+                            <span class="lang-id">Isi kuesioner ini untuk membantumu memahami motivasimu dalam belajar.</span>
+                            <span class="lang-en">Fill out this questionnaire to help you understand your learning motivation.</span>
+                        </p>
+                        <form id="motivation-form">
+                            <div id="motivation-questions-container" class="mt-8 space-y-8">
+                            <!-- Motivation questions will be dynamically inserted here -->
+                            </div>
+                            <button type="submit" id="submit-motivation-btn" class="mt-8 w-full md:w-auto bg-[#78C800] text-white font-bold py-3 px-6 rounded-lg hover:bg-[#58a700] transition-colors flex items-center justify-center space-x-2">
+                                <span>💾</span>
+                                <span>
+                                    <span class="lang-id">Kirim Jawaban</span>
+                                    <span class="lang-en">Submit Answers</span>
+                                </span>
+                            </button>
+                        </form>
+                        <div id="motivation-complete-view" style="display: none;" class="mt-8 p-8 bg-white rounded-xl shadow-md border border-gray-200 text-center">
+                            <div class="text-6xl">🙌</div>
+                            <h3 class="text-2xl font-bold text-gray-800 mt-4">
+                                <span class="lang-id">Terima Kasih!</span>
+                                <span class="lang-en">Thank You!</span>
+                            </h3>
+                            <p class="mt-2 text-gray-600">
+                                <span class="lang-id">Jawabanmu telah berhasil disimpan.</span>
+                                <span class="lang-en">Your answers have been saved successfully.</span>
+                            </p>
+                            <button id="motivation-back-to-home-btn" class="mt-6 bg-[#78C800] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#58a700] transition-colors">
+                                <span class="lang-id">Kembali ke Halaman Utama</span>
+                                <span class="lang-en">Back to Home</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="home" class="active">
+                        <div id="student-welcome" style="display: none;">
+                            <h2 class="text-2xl md:text-3xl font-bold text-[#78C800]">
+                                <span class="lang-id">
+                                    Selamat Datang Kembali, <span id="welcome-name-id"></span>
+                                    ! 👋
+                                </span>
+                                <span class="lang-en">
+                                    Welcome Back, <span id="welcome-name-en"></span>
+                                    ! 👋
+                                </span>
+                            </h2>
+                            <p class="mt-2 text-gray-600">
+                                <span class="lang-id">Lanjutkan petualangan belajarmu. Pilih unit dari menu untuk memulai.</span>
+                                <span class="lang-en">Continue your learning adventure. Select a unit from the menu to start.</span>
+                            </p>
+                        </div>
+                        <div id="student-setup" class="p-6 sm:p-8 bg-white rounded-xl shadow-md border border-gray-200 text-center">
+                            <h2 class="text-xl md:text-2xl font-bold text-gray-800">
+                                <span class="lang-id">Selamat Datang!</span>
+                                <span class="lang-en">Welcome!</span>
+                            </h2>
+                            <p class="mt-2 text-gray-600">
+                                <span class="lang-id">Untuk memulai dan menyimpan progres, silakan masukkan nama dan kelasmu.</span>
+                                <span class="lang-en">To begin and save your progress, please enter your name and class.</span>
+                            </p>
+                            <form id="student-form" class="mt-6 flex flex-col items-center">
+                                <select id="student-name-input" class="w-full max-w-sm p-3 border border-gray-300 rounded-md text-center bg-white" required>
+                                <!-- Student options generated by JS -->
+                                </select>
+                                <select id="student-class-input" class="w-full max-w-sm p-3 mt-4 border border-gray-300 rounded-md text-center bg-white" required>
+                                <!-- Class options generated by JS -->
+                                </select>
+                                <button type="submit" class="mt-4 w-full max-w-sm bg-[#78C800] text-white font-bold py-3 px-6 rounded-lg hover:bg-[#58a700] transition-colors">
+                                    <span class="lang-id">Mulai Belajar</span>
+                                    <span class="lang-en">Start Learning</span>
+                                </button>
+                            </form>
+                        </div>
+                        <div class="mt-8 md:hidden">
+                            <h3 class="text-xl font-bold text-gray-700 mb-4 text-center">
+                                <span class="lang-id">Mulai Belajar</span>
+                                <span class="lang-en">Start Learning</span>
+                            </h3>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4" id="mobile-unit-nav">
+                            <!-- Unit cards generated by JS -->
+                            </div>
+                        </div>
+                        <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col items-center text-center">
+                            <img src="geera-logo.jpg" alt="Geera Logo" class="h-24 mb-4">
+                            <h3 class="text-xl md:text-2xl font-bold text-gray-700">
+                                <span class="lang-id">Kata Pengantar</span>
+                                <span class="lang-en">Preface</span>
+                            </h3>
+                            <p class="mt-4 text-gray-600 leading-relaxed max-w-2xl">
+                                <span class="lang-id">Selamat datang, petualang bahasa! 🥳 Ini bukan sekadar buku kerja—ini adalah paspor Anda untuk membuka dunia percakapan bahasa Inggris dengan percaya diri. Lupakan hafalan yang membosankan! Di sini, kita akan memulai perjalanan seru 🚀 melalui musik, permainan, dan tantangan nyata. Setiap unit adalah satu langkah lebih dekat dalam peta petualanganmu 🗺️. Mari mulai dan jadilah bintang percakapan! ✨</span>
+                                <span class="lang-en">Welcome, language adventurer! 🥳 This isn't just another workbook—it's your passport to unlocking a world of confident English conversation. Forget boring memorization! Here, we'll embark on a fun journey 🚀 through music, games, and real-world challenges. Every unit is a step closer on your adventure map 🗺️. Let's begin and become a conversation star! ✨</span>
+                            </p>
+                        </div>
+                        <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                            <h3 class="text-xl md:text-2xl font-bold text-gray-700">
+                                <span class="lang-id">Cara Menggunakan Buku Ini</span>
+                                <span class="lang-en">How to Use This Book</span>
+                            </h3>
+                            <p class="mt-2 text-gray-600">
+                                <span class="lang-id">Ikuti langkah-langkah seru ini di setiap unit untuk menjadi bintang percakapan!</span>
+                                <span class="lang-en">Follow these fun steps in each unit to become a conversation star!</span>
+                            </p>
+                            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <h4 class="font-bold text-lg">🎵 Sing Along</h4>
+                                    <p class="text-sm text-gray-600 mt-1">
+                                        <span class="lang-id">Mulai pelajaran dengan lagu.</span>
+                                        <span class="lang-en">Start the lesson with a song.</span>
+                                    </p>
+                                </div>
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <h4 class="font-bold text-lg">📚 Learn New Words</h4>
+                                    <p class="text-sm text-gray-600 mt-1">
+                                        <span class="lang-id">Pelajari kosakata baru.</span>
+                                        <span class="lang-en">Learn new vocabulary.</span>
+                                    </p>
+                                </div>
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <h4 class="font-bold text-lg">💬 Practice Dialogue</h4>
+                                    <p class="text-sm text-gray-600 mt-1">
+                                        <span class="lang-id">Latih percakapan dengan teman.</span>
+                                        <span class="lang-en">Practice dialogue with a friend.</span>
+                                    </p>
+                                </div>
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <h4 class="font-bold text-lg">🗣️ Speaking Tasks</h4>
+                                    <p class="text-sm text-gray-600 mt-1">
+                                        <span class="lang-id">Bermain peran dalam konteks nyata.</span>
+                                        <span class="lang-en">Role-play in real contexts.</span>
+                                    </p>
+                                </div>
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <h4 class="font-bold text-lg">📱 Duolingo Play</h4>
+                                    <p class="text-sm text-gray-600 mt-1">
+                                        <span class="lang-id">Gunakan aplikasi untuk latihan tambahan.</span>
+                                        <span class="lang-en">Use the app for extra practice.</span>
+                                    </p>
+                                </div>
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <h4 class="font-bold text-lg">⭐ Collect Rewards</h4>
+                                    <p class="text-sm text-gray-600 mt-1">
+                                        <span class="lang-id">Kumpulkan bintang dan sertifikat.</span>
+                                        <span class="lang-en">Collect stars and a certificate.</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- This is a template for units. It will be cloned and populated by JavaScript -->
+                    <div id="unit-template" data-unit-number="0" class="unit-page">
+                        <h2 class="text-2xl md:text-3xl font-bold text-[#78C800] unit-title"></h2>
+                        <p class="mt-2 text-gray-600 unit-description"></p>
+                        <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                            <h3 class="text-xl md:text-2xl font-bold text-gray-700">🎵 Sing Along</h3>
+                            <p class="mt-2 text-gray-600">
+                                <span class="lang-id">Dengarkan lagu dan selesaikan tugas di bawah ini.</span>
+                                <span class="lang-en">Listen to the song and complete the tasks below.</span>
+                            </p>
+                            <div class="mt-4 space-y-3 sing-along-tasks"></div>
+                        </div>
+                        <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                            <h3 class="text-xl md:text-2xl font-bold text-gray-700">
+                                📚 <span class="lang-id">Kosakata Baru</span>
+                                <span class="lang-en">New Vocabulary</span>
+                            </h3>
+                            <p class="mt-2 text-gray-600">
+                                <span class="lang-id">Buat contoh kalimat menggunakan kata-kata di bawah ini.</span>
+                                <span class="lang-en">Create example sentences using the words below.</span>
+                            </p>
+                            <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 vocab-list"></div>
+                            <div class="mt-4 pt-4 border-t space-y-4 vocab-examples-form"></div>
+                            <button class="save-section-button mt-4 bg-gray-200 text-gray-700 text-sm font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors flex items-center space-x-2" data-section="vocabulary">
+                                <span>💾</span>
+                                <span>
+                                    <span class="lang-id">Simpan Contoh</span>
+                                    <span class="lang-en">Save Examples</span>
+                                </span>
+                            </button>
+                            <div class="teacher-score-box mt-4 pt-4 border-t border-dashed">
+                                <h4 class="font-semibold text-sm text-gray-600">
+                                    <span class="lang-id">Skor Guru</span>
+                                    <span class="lang-en">Teacher's Score</span>
+                                </h4>
+                                <div class="flex items-center space-x-2 mt-1">
+                                    <input type="number" class="teacher-score-input w-24 p-1 border rounded" placeholder=".../100" data-section="vocabulary">
+                                    <button class="save-teacher-score-button bg-blue-500 text-white text-xs px-3 py-1 rounded hover:bg-blue-600">
+                                        <span class="lang-id">Simpan Skor</span>
+                                        <span class="lang-en">Save Score</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                            <h3 class="text-xl md:text-2xl font-bold text-gray-700">
+                                💬 <span class="lang-id">Contoh Dialog</span>
+                                <span class="lang-en">Dialogue Example</span>
+                            </h3>
+                            <p class="mt-2 text-gray-600">
+                                <span class="lang-id">Baca dan pahami contoh percakapan berikut.</span>
+                                <span class="lang-en">Read and understand the following example conversation.</span>
+                            </p>
+                            <div class="mt-4 space-y-4 dialogue-practice-area border bg-gray-50 rounded-lg p-4 h-96 overflow-y-auto flex flex-col"></div>
+                            <div class="teacher-score-box mt-4 pt-4 border-t border-dashed">
+                                <h4 class="font-semibold text-sm text-gray-600">
+                                    <span class="lang-id">Skor Guru</span>
+                                    <span class="lang-en">Teacher's Score</span>
+                                </h4>
+                                <div class="flex items-center space-x-2 mt-1">
+                                    <input type="number" class="teacher-score-input w-24 p-1 border rounded" placeholder=".../100" data-section="dialogue">
+                                    <button class="save-teacher-score-button bg-blue-500 text-white text-xs px-3 py-1 rounded hover:bg-blue-600">
+                                        <span class="lang-id">Simpan Skor</span>
+                                        <span class="lang-en">Save Score</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                            <h3 class="text-xl md:text-2xl font-bold text-gray-700">
+                                🤝 <span class="lang-id">Latihan Berbicara</span>
+                                <span class="lang-en">Speaking Practice</span>
+                            </h3>
+                            <p class="mt-2 text-gray-600">
+                                <span class="lang-id">Tanyakan pada temanmu dan catat jawabannya di bawah ini!</span>
+                                <span class="lang-en">Ask your friend and write down their answers below!</span>
+                            </p>
+                            <div class="mt-4 space-y-4 peer-interview"></div>
+                            <button class="save-section-button mt-4 bg-gray-200 text-gray-700 text-sm font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors flex items-center space-x-2" data-section="interview">
+                                <span>💾</span>
+                                <span>
+                                    <span class="lang-id">Simpan Jawaban</span>
+                                    <span class="lang-en">Save Answers</span>
+                                </span>
+                            </button>
+                            <div class="teacher-score-box mt-4 pt-4 border-t border-dashed">
+                                <h4 class="font-semibold text-sm text-gray-600">
+                                    <span class="lang-id">Skor Guru</span>
+                                    <span class="lang-en">Teacher's Score</span>
+                                </h4>
+                                <div class="flex items-center space-x-2 mt-1">
+                                    <input type="number" class="teacher-score-input w-24 p-1 border rounded" placeholder=".../100" data-section="interview">
+                                    <button class="save-teacher-score-button bg-blue-500 text-white text-xs px-3 py-1 rounded hover:bg-blue-600">
+                                        <span class="lang-id">Simpan Skor</span>
+                                        <span class="lang-en">Save Score</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                            <h3 class="text-xl md:text-2xl font-bold text-gray-700">📱 Duolingo Play</h3>
+                            <p class="mt-2 text-gray-600">
+                                <span class="lang-id">Buka aplikasi Duolingo dan selesaikan tantangan ini.</span>
+                                <span class="lang-en">Open the Duolingo app and complete these challenges.</span>
+                            </p>
+                            <div class="mt-4 space-y-3 duolingo-play-tasks"></div>
+                            <div class="mt-4 pt-4 border-t">
+                                <h4 class="font-semibold text-gray-700">
+                                    <span class="lang-id">Lacak Kemajuanmu</span>
+                                    <span class="lang-en">Track Your Progress</span>
+                                </h4>
+                                <div class="grid grid-cols-2 gap-4 mt-2">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-600">
+                                            <span class="lang-id">XP Didapat</span>
+                                            <span class="lang-en">XP Earned</span>
+                                        </label>
+                                        <input type="number" class="duolingo-xp-input mt-1 w-full p-2 border rounded-md" placeholder="e.g., 50">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-600">
+                                            <span class="lang-id">Streak Saat Ini</span>
+                                            <span class="lang-en">Current Streak</span>
+                                            🔥
+                                        </label>
+                                        <input type="number" class="duolingo-streak-input mt-1 w-full p-2 border rounded-md" placeholder="e.g., 14">
+                                    </div>
+                                </div>
+                                <button class="save-section-button mt-4 bg-gray-200 text-gray-700 text-sm font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors flex items-center space-x-2" data-section="duolingoPlay">
+                                    <span>💾</span>
+                                    <span>
+                                        <span class="lang-id">Simpan Progres</span>
+                                        <span class="lang-en">Save Progress</span>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                            <h3 class="text-xl md:text-2xl font-bold text-gray-700">
+                                ⭐ <span class="lang-id">Refleksi Diri</span>
+                                <span class="lang-en">Self Reflection</span>
+                            </h3>
+                            <p class="mt-2 text-gray-600">
+                                <span class="lang-id">Seberapa percaya diri kamu setelah pelajaran ini? Beri peringkat dirimu!</span>
+                                <span class="lang-en">How confident do you feel after this lesson? Rate yourself!</span>
+                            </p>
+                            <div class="mt-4 text-4xl text-gray-300 star-rating">
+                                <span data-value="1">★</span>
+                                <span data-value="2">★</span>
+                                <span data-value="3">★</span>
+                                <span data-value="4">★</span>
+                                <span data-value="5">★</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="unit1"></div>
+                    <div id="unit2"></div>
+                    <div id="unit3"></div>
+                    <div id="unit4"></div>
+                    <div id="unit5"></div>
+                    <div id="unit6"></div>
+                    <div id="unit7"></div>
+                    <div id="unit8"></div>
+                    <div id="tracker">
+                        <div id="student-tracker-view">
+                            <h2 class="text-2xl md:text-3xl font-bold text-[#78C800]">
+                                🎯 <span class="lang-id">Pelacak Kemajuan</span>
+                                <span class="lang-en">Progress Tracker</span>
+                            </h2>
+                            <p class="mt-2 text-gray-600">
+                                <span class="lang-id">Catat progres belajarmu di Duolingo setiap sesi.</span>
+                                <span class="lang-en">Record your Duolingo progress every session.</span>
+                            </p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
+                                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-center">
+                                    <h3 class="text-sm font-semibold text-gray-500 uppercase">
+                                        <span class="lang-id">Total XP Didapat</span>
+                                        <span class="lang-en">Total XP Earned</span>
+                                    </h3>
+                                    <p id="total-xp-display" class="text-3xl font-bold text-[#78C800] mt-1">0</p>
+                                </div>
+                                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-center">
+                                    <h3 class="text-sm font-semibold text-gray-500 uppercase">
+                                        <span class="lang-id">Streak Saat Ini</span>
+                                        <span class="lang-en">Current Streak</span>
+                                    </h3>
+                                    <p id="current-streak-display" class="text-3xl font-bold text-[#78C800] mt-1">0 🔥</p>
+                                </div>
+                            </div>
+                            <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <div class="p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                                    <h3 class="text-xl md:text-2xl font-bold text-gray-700">
+                                        <span class="lang-id">Tabel Progres</span>
+                                        <span class="lang-en">Progress Table</span>
+                                    </h3>
+                                    <div class="mt-4 overflow-x-auto">
+                                        <table class="w-full text-left" id="tracker-table">
+                                            <thead class="bg-gray-50">
+                                                <tr>
+                                                    <th class="p-3 font-semibold">
+                                                        <span class="lang-id">Sesi</span>
+                                                        <span class="lang-en">Session</span>
+                                                    </th>
+                                                    <th class="p-3 font-semibold">
+                                                        <span class="lang-id">XP Didapat</span>
+                                                        <span class="lang-en">XP Earned</span>
+                                                    </th>
+                                                    <th class="p-3 font-semibold">Streak 🔥</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                                    <h3 class="text-xl md:text-2xl font-bold text-gray-700">
+                                        <span class="lang-id">Visualisasi XP</span>
+                                        <span class="lang-en">XP Visualization</span>
+                                    </h3>
+                                    <div class="mt-4 chart-container relative h-80 w-full max-w-lg mx-auto">
+                                        <canvas id="progressChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-8">
+                                <button id="save-tracker-button" class="w-full md:w-auto bg-[#78C800] text-white font-bold py-3 px-6 rounded-lg hover:bg-[#58a700] transition-colors flex items-center justify-center space-x-2">
+                                    <span>💾</span>
+                                    <span>
+                                        <span class="lang-id">Simpan Progres</span>
+                                        <span class="lang-en">Save Progress</span>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="teacher-tracker-view" style="display: none;">
+                            <h2 class="text-2xl md:text-3xl font-bold text-[#78C800]">
+                                📋 <span class="lang-id">Laporan & Penilaian Manual</span>
+                                <span class="lang-en">Manual Report & Grading</span>
+                            </h2>
+                            <p class="mt-2 text-gray-600">
+                                <span class="lang-id">Tambah entri untuk mencatat progres dan nilai siswa. Data disimpan langsung ke Firestore.</span>
+                                <span class="lang-en">Add entries to record student progress and grades. Data is saved directly to Firestore.</span>
+                            </p>
+                            <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="p-3 font-semibold">
+                                                <span class="lang-id">Nama Siswa</span>
+                                                <span class="lang-en">Name</span>
+                                            </th>
+                                            <th class="p-3 font-semibold">
+                                                <span class="lang-id">Kelas</span>
+                                                <span class="lang-en">Class</span>
+                                            </th>
+                                            <th class="p-3 font-semibold">
+                                                <span class="lang-id">Unit</span>
+                                                <span class="lang-en">Unit</span>
+                                            </th>
+                                            <th class="p-3 font-semibold">
+                                                <span class="lang-id">Aktivitas</span>
+                                                <span class="lang-en">Activity</span>
+                                            </th>
+                                            <th class="p-3 font-semibold">XP</th>
+                                            <th class="p-3 font-semibold">Streak</th>
+                                            <th class="p-3 font-semibold">
+                                                <span class="lang-id">Nilai</span>
+                                                <span class="lang-en">Grade</span>
+                                            </th>
+                                            <th class="p-3 font-semibold">
+                                                <span class="lang-id">Komentar</span>
+                                                <span class="lang-en">Comments</span>
+                                            </th>
+                                            <th class="p-3"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="teacher-report-body" class="divide-y"></tbody>
+                                </table>
+                            </div>
+                            <div class="mt-4 flex space-x-2">
+                                <button id="add-report-entry-btn" class="bg-[#78C800] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#58a700]">
+                                    <span class="lang-id">Tambah Entri</span>
+                                    <span class="lang-en">Add Entry</span>
+                                </button>
+                                <button id="save-report-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">
+                                    <span>💾</span>
+                                    <span>
+                                        <span class="lang-id">Simpan Laporan</span>
+                                        <span class="lang-en">Save Report</span>
+                                    </span>
+                                </button>
+                            </div>
+                            <div id="pre-post-test-dashboard" class="mt-12">
+                                <h3 class="text-xl md:text-2xl font-bold text-gray-700">
+                                    <span class="lang-id">Dashboard Skor Pre-Test & Post-Test</span>
+                                    <span class="lang-en">Pre-Test & Post-Test Score Dashboard</span>
+                                </h3>
+                                <div class="mt-4 p-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+                                    <table class="w-full text-left">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="p-3 font-semibold">
+                                                    <span class="lang-id">Nama Siswa</span>
+                                                    <span class="lang-en">Name</span>
+                                                </th>
+                                                <th class="p-3 font-semibold">
+                                                    <span class="lang-id">Kelas</span>
+                                                    <span class="lang-en">Class</span>
+                                                </th>
+                                                <th class="p-3 font-semibold">
+                                                    <span class="lang-id">Tipe Tes</span>
+                                                    <span class="lang-en">Test Type</span>
+                                                </th>
+                                                <th class="p-3 font-semibold">
+                                                    <span class="lang-id">Skor</span>
+                                                    <span class="lang-en">Score</span>
+                                                </th>
+                                                <th class="p-3 font-semibold">
+                                                    <span class="lang-id">Komentar</span>
+                                                    <span class="lang-en">Comments</span>
+                                                </th>
+                                                <th class="p-3"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="pre-post-test-body" class="divide-y"></tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-4 flex space-x-2">
+                                    <button id="add-pre-post-test-entry-btn" class="bg-[#78C800] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#58a700]">
+                                        <span class="lang-id">Tambah Entri</span>
+                                        <span class="lang-en">Add Entry</span>
+                                    </button>
+                                    <button id="save-pre-post-test-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">
+                                        <span>💾</span>
+                                        <span>
+                                            <span class="lang-id">Simpan Skor Tes</span>
+                                            <span class="lang-en">Save Test Scores</span>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="motivation-dashboard" class="mt-12">
+                                <h3 class="text-xl md:text-2xl font-bold text-gray-700">
+                                    <span class="lang-id">Dashboard Skor Motivasi</span>
+                                    <span class="lang-en">Motivation Score Dashboard</span>
+                                </h3>
+                                <div class="mt-4 p-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+                                    <table class="w-full text-left">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="p-3 font-semibold">
+                                                    <span class="lang-id">Nama Siswa</span>
+                                                    <span class="lang-en">Name</span>
+                                                </th>
+                                                <th class="p-3 font-semibold">
+                                                    <span class="lang-id">Kelas</span>
+                                                    <span class="lang-en">Class</span>
+                                                </th>
+                                                <th class="p-3 font-semibold">
+                                                    <span class="lang-id">Skor (1-5)</span>
+                                                    <span class="lang-en">Score (1-5)</span>
+                                                </th>
+                                                <th class="p-3 font-semibold">
+                                                    <span class="lang-id">Komentar</span>
+                                                    <span class="lang-en">Comments</span>
+                                                </th>
+                                                <th class="p-3"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="motivation-body" class="divide-y"></tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-4 flex space-x-2">
+                                    <button id="add-motivation-entry-btn" class="bg-[#78C800] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#58a700]">
+                                        <span class="lang-id">Tambah Entri</span>
+                                        <span class="lang-en">Add Entry</span>
+                                    </button>
+                                    <button id="save-motivation-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">
+                                        <span>💾</span>
+                                        <span>
+                                            <span class="lang-id">Simpan Skor Motivasi</span>
+                                            <span class="lang-en">Save Motivation Scores</span>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+        <!-- UI Elements -->
+        <div id="toast" class="fixed bottom-5 right-5 bg-gray-800 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transform translate-y-2"></div>
+        <div id="teacher-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" style="display: none;">
+            <div class="bg-white rounded-lg p-6 shadow-xl w-full max-w-sm">
+                <h3 class="text-lg font-bold">
+                    <span class="lang-id">Mode Guru</span>
+                    <span class="lang-en">Teacher Mode</span>
+                </h3>
+                <p class="text-sm text-gray-600 mt-2">
+                    <span class="lang-id">Masukkan kode akses untuk melihat bagian tambahan.</span>
+                    <span class="lang-en">Enter the access code to view extra sections.</span>
+                </p>
+                <input type="password" id="teacher-password-input" class="w-full p-2 border rounded mt-4" placeholder="Kode Akses / Access Code">
+                <div class="mt-4 flex justify-end space-x-2">
+                    <button id="cancel-teacher-modal" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
+                        <span class="lang-id">Batal</span>
+                        <span class="lang-en">Cancel</span>
+                    </button>
+                    <button id="submit-teacher-password" class="px-4 py-2 bg-[#78C800] text-white rounded hover:bg-[#58a700]">
+                        <span class="lang-id">Masuk</span>
+                        <span class="lang-en">Enter</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Main Application Logic -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+
+                // --- Data & Constants ---
+                 const studentList = [
+  "ADITYA",
+  "AMIRA",
+  "ANISA",
+  "ANDARA",
+  "BUMI",
+  "IHSAN",
+  "KHANSA",
+  "KOKO",
+  "NAJWA",
+  "NAJWA AULIA",
+  "NAQUEEN",
+  "RAFIF",
+  "RINI",
+  "SYAKIRA",
+  "TRISTAN",
+  "ZHILAN","ZAKI",
+].sort();
+                const classList = ["Kelas 7", "Kelas 8", "Kelas 9", "Kelas 10", "Kelas 11"];
+                const pretestQuestions = [{
+                    q: "1. At school, we do experiments in the science __________.",
+                    o: ["Market", "Laboratory", "Hospital", "Station"]
+                }, {
+                    q: "2. My mother always __________ fresh vegetables at the market for our dinner at home.",
+                    o: ["Buys", "Sells", "Sleeps", "Drives"]
+                }, {
+                    q: "3. The Borobudur Temple is a __________ building in Indonesia, visited by many tourists every year.",
+                    o: ["Modern", "Famous", "Fresh", "Young"]
+                }, {
+                    q: "4. The fried rice cooked by my mother tastes very __________. I really enjoy it.",
+                    o: ["Sour", "Tasty", "Ugly", "Bitter"]
+                }, {
+                    q: "5. A __________ fixes cars and motorcycles in the workshop.",
+                    o: ["Mechanic", "Farmer", "Teacher", "Pilot"]
+                }, {
+                    q: "6. The nurse gives medicine to the sick __________ lying in the hospital bed.",
+                    o: ["Patient", "Student", "Visitor", "Farmer"]
+                }, {
+                    q: "7. We borrow storybooks from the school __________ every week.",
+                    o: ["Library", "Kitchen", "Market", "Canteen"]
+                }, {
+                    q: "8. My grandfather still uses an __________ radio at home. It is very old.",
+                    o: ["Ancient", "Delicious", "Fresh", "New"]
+                }, {
+                    q: "9. Soldiers work hard to __________ their country from enemies.",
+                    o: ["Defend", "Destroy", "Break", "Ignore"]
+                }, {
+                    q: "10. The bus is very __________; it arrives in only five minutes.",
+                    o: ["Quick", "Weak", "Late", "Slow"]
+                }, {
+                    q: "11. My grandfather is 80 years old; he is not __________ anymore.",
+                    o: ["Young", "Tall", "Small", "Baby"]
+                }, {
+                    q: "12. The teacher tells us to __________ our homework after lunch so we can study together.",
+                    o: ["Start", "Cancel", "Forget", "Ignore"]
+                }, {
+                    q: "13. The library is so quiet; it is not __________ at all.",
+                    o: ["Noisy", "Crowded", "Busy", "Loud"]
+                }, {
+                    q: "14. The roses in front of the class look very __________. They are beautiful.",
+                    o: ["Pretty", "Dirty", "Ugly", "Bad"]
+                }, {
+                    q: "15. The quiz feels __________ for many students. They finish quickly.",
+                    o: ["Easy", "Hard", "Weak", "Strong"]
+                }, {
+                    q: "16. The rabbit has very long __________ on its head.",
+                    o: ["Ears", "Legs", "Eyes", "Teeth"]
+                }, {
+                    q: "17. We put the water in the fridge if we want it __________ to drink.",
+                    o: ["Cold", "Hot", "Warm", "Big"]
+                }, {
+                    q: "18. I usually walk to school with my best __________, my closest companion.",
+                    o: ["Friend", "Enemy", "Visitor", "Stranger"]
+                }, {
+                    q: "19. We reach the classroom after the bell; we are not __________.",
+                    o: ["Early", "Soon", "After", "Now"]
+                }, {
+                    q: "20. Dita solves math problems quickly; she is very __________ in class.",
+                    o: ["Bright", "Lazy", "Slow", "Weak"]
+                }, {
+                    q: "21. My brother is very __________. He is not short.",
+                    o: ["Tall", "Small", "Big", "Thin"]
+                }, {
+                    q: "22. We go to the __________ to buy medicine. It sells drugs legally.",
+                    o: ["Pharmacy", "Library", "Station", "Market"]
+                }, {
+                    q: "23. The sky is full of twinkling __________ at night.",
+                    o: ["Stars", "Clouds", "Sand", "Trees"]
+                }, {
+                    q: "24. A person who drives a car every day is called a __________.",
+                    o: ["Farmer", "Teacher", "Driver", "Pilot"]
+                }, {
+                    q: "25. That mountain is very __________; it is hard to climb.",
+                    o: ["High", "Low", "Short", "Flat"]
+                }, {
+                    q: "26. My shoes are very __________. They cost a lot of money.",
+                    o: ["Expensive", "Small", "Dirty", "Weak"]
+                }, {
+                    q: "27. The cheetah is the __________ animal on land. It can run up to 100 km/h.",
+                    o: ["Fastest", "Slowest", "Heaviest", "Strongest"]
+                }, {
+                    q: "28. She cries all day because she is very __________.",
+                    o: ["Sad", "Clever", "Smart", "Tall"]
+                }, {
+                    q: "29. Please __________ the window, it is too hot inside.",
+                    o: ["Open", "Close", "Lock", "Break"]
+                }, {
+                    q: "30. The farmer grows __________ on his farm, which is the main food in Asia.",
+                    o: ["Rice", "Corn", "Wheat", "Potato"]
+                }];
+                const motivationQuestions = {
+                    'A': {
+                        title_id: "Motivasi dari Diri Sendiri",
+                        title_en: "Motivation from Oneself",
+                        questions: [{
+                            id: 1,
+                            text_id: "Saya belajar Bahasa Inggris karena saya suka dan menikmatinya.",
+                            text_en: "I study English because I like and enjoy it."
+                        }, {
+                            id: 2,
+                            text_id: "Saya merasa bangga dan puas kalau bisa belajar Bahasa Inggris dengan baik.",
+                            text_en: "I feel proud and satisfied if I can learn English well."
+                        }, {
+                            id: 3,
+                            text_id: "Saya merasa senang saat berhasil memahami pelajaran Bahasa Inggris.",
+                            text_en: "I feel happy when I succeed in understanding English lessons."
+                        }]
+                    },
+                    'B': {
+                        title_id: "Motivasi karena Tujuan Pribadi",
+                        title_en: "Motivation for Personal Goals",
+                        questions: [{
+                            id: 4,
+                            text_id: "Saya belajar Bahasa Inggris karena saya tahu itu bermanfaat untuk masa depan.",
+                            text_en: "I study English because I know it is beneficial for the future."
+                        }, {
+                            id: 5,
+                            text_id: "Saya belajar Bahasa Inggris supaya nilai saya di sekolah lebih bagus.",
+                            text_en: "I study English to get better grades at school."
+                        }, {
+                            id: 6,
+                            text_id: "Saya belajar Bahasa Inggris karena penting untuk meraih cita-cita saya.",
+                            text_en: "I study English because it is important for achieving my goals."
+                        }]
+                    },
+                    'C': {
+                        title_id: "Motivasi karena Dorongan Luar",
+                        title_en: "Motivation from External Encouragement",
+                        questions: [{
+                            id: 7,
+                            text_id: "Saya belajar Bahasa Inggris karena disuruh orang tua atau guru.",
+                            text_en: "I study English because my parents or teacher told me to."
+                        }, {
+                            id: 8,
+                            text_id: "Saya belajar Bahasa Inggris supaya mendapatkan nilai yang tinggi.",
+                            text_en: "I study English to get high scores."
+                        }, {
+                            id: 9,
+                            text_id: "Saya belajar Bahasa Inggris agar tidak dimarahi guru atau orang tua.",
+                            text_en: "I study English so I won't be scolded by my teacher or parents."
+                        }]
+                    },
+                    'D': {
+                        title_id: "Tidak Ada Motivasi",
+                        title_en: "No Motivation",
+                        questions: [{
+                            id: 10,
+                            text_id: "Saya tidak tahu kenapa saya harus belajar Bahasa Inggris.",
+                            text_en: "I don't know why I have to study English."
+                        }, {
+                            id: 11,
+                            text_id: "Saya merasa belajar Bahasa Inggris tidak ada gunanya untuk saya.",
+                            text_en: "I feel that studying English is useless for me."
+                        }, {
+                            id: 12,
+                            text_id: "Kadang saya belajar Bahasa Inggris tanpa alasan yang jelas.",
+                            text_en: "Sometimes I study English for no clear reason."
+                        }]
+                    }
+                };
+                const unitData = {
+                    1: {
+                        title: {
+                            id: "UNIT 1: Orientasi & Pengaturan Duolingo",
+                            en: "UNIT 1: Orientation & Duolingo Setup 🧠"
+                        },
+                        description: {
+                            id: "Di unit ini, kita akan berkenalan dengan kelas dan menyiapkan akun Duolingo.",
+                            en: "In this unit, we will get to know the class and set up a Duolingo account."
+                        },
+                        vocab: [{
+                            en: "Account",
+                            id: "Akun",
+                            icon: "👤"
+                        }, {
+                            en: "Username",
+                            id: "Nama Pengguna",
+                            icon: "💬"
+                        }, {
+                            en: "Streak",
+                            id: "Runtunan",
+                            icon: "🔥"
+                        }, {
+                            en: "Lesson",
+                            id: "Pelajaran",
+                            icon: "📚"
+                        }],
+                        singAlong: [{
+                            id: "Nyanyikan lagu 'A million dreams - The Greatest Showman'",
+                            en: "Sing the song 'A million dreams - The Greatest Showman'",
+                            videoId: "Sr3X0DCXI-M"
+                        }],
+                        dialogue: [{
+                            speaker: "Tutor",
+                            text: "Hi, everyone! Welcome to the class. First, let's set up your Duolingo account. Do you have a smartphone?"
+                        }, {
+                            speaker: "Student",
+                            text: "Yes, I do. I've heard about Duolingo but I've never used it."
+                        }, {
+                            speaker: "Tutor",
+                            text: "Great! Please download it from the app store and create a new account. You can sign up with Google or Facebook to make it faster."
+                        }, {
+                            speaker: "Student",
+                            text: "Okay, I'm creating my account now. What should I choose for the daily goal?"
+                        }, {
+                            speaker: "Tutor",
+                            text: "I recommend starting with the 'Regular' goal, which is about 10 minutes a day. The most important thing is to be consistent and maintain your streak! Now, let's find each other. What's your username?"
+                        }],
+                        duolingoPlay: [{
+                            id: "Ikuti akun Duolingo guru (@fadlyzaki).",
+                            en: "Follow the teacher's Duolingo account (@fadlyzaki)."
+                        }, {
+                            id: "Bergabung dengan kelas Duolingo for Schools (kode: wuyzyz).",
+                            en: "Join the Duolingo for Schools classroom (code: wuyzyz)."
+                        }, {
+                            id: "Selesaikan setup akun Duolingo Anda.",
+                            en: "Finish setting up your Duolingo account."
+                        }],
+                        interview: [{
+                            id: "Apa nama pengguna Duolingo-mu?",
+                            en: "What is your Duolingo username?"
+                        }, {
+                            id: "Mengapa kamu ingin belajar Bahasa Inggris?",
+                            en: "Why do you want to learn English?"
+                        }]
+                    },
+                    2: {
+                        title: {
+                            id: "UNIT 2: Perkenalan Diri",
+                            en: "UNIT 2: Introducing Myself 🙋‍♀️"
+                        },
+                        description: {
+                            id: "Mari belajar cara memperkenalkan diri, termasuk nama, hobi, dan hal-hal favoritmu.",
+                            en: "Let's learn how to introduce yourself, including your name, hobbies, and favorite things."
+                        },
+                        vocab: [{
+                            en: "Name",
+                            id: "Nama",
+                            icon: "🏷️"
+                        }, {
+                            en: "Hobby",
+                            id: "Hobi",
+                            icon: "🎨"
+                        }, {
+                            en: "Live",
+                            id: "Tinggal",
+                            icon: "🏠"
+                        }, {
+                            en: "Favorite",
+                            id: "Favorit",
+                            icon: "❤️"
+                        }],
+                        singAlong: [{
+                            id: "Nyanyikan lagu 'A million dreams - The Greatest Showman'",
+                            en: "Sing the song 'A million dreams - The Greatest Showman'",
+                            videoId: "Sr3X0DCXI-M"
+                        }],
+                        dialogue: [{
+                            speaker: "Alex",
+                            text: "Hi! My name is Alex. What's your name?"
+                        }, {
+                            speaker: "Bella",
+                            text: "Hello, Alex. I'm Bella. It's a pleasure to meet you."
+                        }, {
+                            speaker: "Alex",
+                            text: "Nice to meet you too, Bella. Where do you live?"
+                        }, {
+                            speaker: "Bella",
+                            text: "I live in Jakarta. My hobby is reading comics and watching sci-fi movies. What about you?"
+                        }, {
+                            speaker: "Alex",
+                            text: "That's cool! I'm into sports. I love playing basketball on weekends. By the way, what's your favorite subject in school?"
+                        }, {
+                            speaker: "Bella",
+                            text: "I really enjoy History. Learning about the past is fascinating. And you?"
+                        }, {
+                            speaker: "Alex",
+                            text: "For me, it's definitely Physics. I want to be an engineer someday."
+                        }],
+                        duolingoPlay: [{
+                            id: "Dapatkan minimal 10 XP di Duolingo.",
+                            en: "Earn a minimum of 10 XP on Duolingo."
+                        }],
+                        interview: [{
+                            id: "Siapa nama lengkapmu?",
+                            en: "What is your full name?"
+                        }, {
+                            id: "Apa hobimu?",
+                            en: "What is your hobby?"
+                        }, {
+                            id: "Apa makanan favoritmu?",
+                            en: "What is your favorite food?"
+                        }]
+                    },
+                    3: {
+                        title: {
+                            id: "UNIT 3: Rutinitas Harian",
+                            en: "UNIT 3: Daily Routines ☀️"
+                        },
+                        description: {
+                            id: "Membicarakan kegiatan sehari-hari, dari pagi hingga malam.",
+                            en: "Talking about daily activities, from morning to night."
+                        },
+                        vocab: [{
+                            en: "Wake up",
+                            id: "Bangun",
+                            icon: "⏰"
+                        }, {
+                            en: "Breakfast",
+                            id: "Sarapan",
+                            icon: "🍳"
+                        }, {
+                            en: "Go to school",
+                            id: "Pergi sekolah",
+                            icon: "🎒"
+                        }, {
+                            en: "Sleep",
+                            id: "Tidur",
+                            icon: "😴"
+                        }],
+                        singAlong: [{
+                            id: "Nyanyikan lagu 'Count on Me - Bruno Mars'",
+                            en: "Sing the song 'Count on Me - Bruno Mars'",
+                            videoId: "6k8cpUkKK4c"
+                        }],
+                        dialogue: [{
+                            speaker: "Chris",
+                            text: "What time do you usually wake up on weekdays?"
+                        }, {
+                            speaker: "Dana",
+                            text: "I usually wake up at 6 AM. I have to get ready for school. Then I have breakfast with my family."
+                        }, {
+                            speaker: "Chris",
+                            text: "What do you usually eat for breakfast?"
+                        }, {
+                            speaker: "Dana",
+                            text: "I like to eat bread and milk, but sometimes my mom cooks fried rice. It's delicious! After school, I usually do my homework first."
+                        }, {
+                            speaker: "Chris",
+                            text: "Me too. After finishing my homework, I often play video games for about an hour before dinner."
+                        }, {
+                            speaker: "Dana",
+                            text: "That sounds fun. I usually read a book before I go to sleep around 10 PM."
+                        }],
+                        duolingoPlay: [{
+                            id: "Dapatkan minimal 10 XP di Duolingo.",
+                            en: "Earn a minimum of 10 XP on Duolingo."
+                        }],
+                        interview: [{
+                            id: "Jam berapa kamu bangun?",
+                            en: "What time do you wake up?"
+                        }, {
+                            id: "Apa yang kamu lakukan di malam hari?",
+                            en: "What do you do in the evening?"
+                        }]
+                    },
+                    4: {
+                        title: {
+                            id: "UNIT 4: Kehidupan Sekolah",
+                            en: "UNIT 4: School Life 🏫"
+                        },
+                        description: {
+                            id: "Berbagi cerita tentang kehidupan di sekolah.",
+                            en: "Sharing stories about school life."
+                        },
+                        vocab: [{
+                            en: "Subject",
+                            id: "Mata Pelajaran",
+                            icon: "🔬"
+                        }, {
+                            en: "Teacher",
+                            id: "Guru",
+                            icon: "👩‍🏫"
+                        }, {
+                            en: "Homework",
+                            id: "Pekerjaan Rumah",
+                            icon: "📝"
+                        }, {
+                            en: "Friend",
+                            id: "Teman",
+                            icon: "🧑‍🤝‍🧑"
+                        }],
+                        singAlong: [{
+                            id: "Nyanyikan lagu 'Count on Me - Bruno Mars'",
+                            en: "Sing the song 'Count on Me - Bruno Mars'",
+                            videoId: "6k8cpUkKK4c"
+                        }],
+                        dialogue: [{
+                            speaker: "Evan",
+                            text: "Hey Fara, how's it going? What is your favorite subject at school?"
+                        }, {
+                            speaker: "Fara",
+                            text: "Hi Evan! I'm doing well, thanks. I love Math! I know it's hard for some people, but I find it challenging and fun. How about you?"
+                        }, {
+                            speaker: "Evan",
+                            text: "Wow, that's impressive. For me, I prefer English. Our teacher, Mr. David, makes the class so interactive. We play games and have debates."
+                        }, {
+                            speaker: "Fara",
+                            text: "Oh, Mr. David is great! I agree. By the way, are you ready for the science exam next week?"
+                        }, {
+                            speaker: "Evan",
+                            text: "Not really. I need to study more for that. Do you want to study together at the library this weekend?"
+                        }, {
+                            speaker: "Fara",
+                            text: "That's a great idea! Let's do it."
+                        }],
+                        duolingoPlay: [{
+                            id: "Dapatkan minimal 10 XP di Duolingo.",
+                            en: "Earn a minimum of 10 XP on Duolingo."
+                        }],
+                        interview: [{
+                            id: "Apa mata pelajaran favoritmu?",
+                            en: "What's your favorite subject?"
+                        }, {
+                            id: "Siapa teman baikmu di sekolah?",
+                            en: "Who is your best friend at school?"
+                        }]
+                    },
+                    5: {
+                        title: {
+                            id: "UNIT 5: Makanan & Minuman",
+                            en: "UNIT 5: Food & Drinks 🍔"
+                        },
+                        description: {
+                            id: "Belajar memesan makanan dan minuman.",
+                            en: "Learning to order food and drinks."
+                        },
+                        vocab: [{
+                            en: "Order",
+                            id: "Memesan",
+                            icon: "🧾"
+                        }, {
+                            en: "Drink",
+                            id: "Minuman",
+                            icon: "🥤"
+                        }, {
+                            en: "Delicious",
+                            id: "Lezat",
+                            icon: "😋"
+                        }, {
+                            en: "Spicy",
+                            id: "Pedas",
+                            icon: "🌶️"
+                        }],
+                        singAlong: [{
+                            id: "Nyanyikan lagu 'Perfect - Ed Sheeran'",
+                            en: "Sing the song 'Perfect - Ed Sheeran'",
+                            videoId: "cNGjD0VG4R8"
+                        }],
+                        dialogue: [{
+                            speaker: "Waiter",
+                            text: "Good evening, welcome to our restaurant! Here is the menu. Are you ready to order?"
+                        }, {
+                            speaker: "Gina",
+                            text: "Good evening. Everything looks so good. What do you recommend?"
+                        }, {
+                            speaker: "Waiter",
+                            text: "Our beef rendang is very popular. It's a local specialty and very delicious."
+                        }, {
+                            speaker: "Gina",
+                            text: "Okay, that sounds great. I'll have the beef rendang. Is it very spicy?"
+                        }, {
+                            speaker: "Waiter",
+                            text: "It has a bit of a kick. We can make it less spicy if you prefer."
+                        }, {
+                            speaker: "Gina",
+                            text: "Yes, please. Less spicy for me. And for the drink, I'll have an iced tea."
+                        }, {
+                            speaker: "Waiter",
+                            text: "Excellent choice. One beef rendang, less spicy, and one iced tea. I'll be right back with your order."
+                        }],
+                        duolingoPlay: [{
+                            id: "Dapatkan minimal 10 XP di Duolingo.",
+                            en: "Earn a minimum of 10 XP on Duolingo."
+                        }],
+                        interview: [{
+                            id: "Apa makanan Indonesia favoritmu?",
+                            en: "What's your favorite Indonesian food?"
+                        }, {
+                            id: "Apakah kamu suka makanan pedas?",
+                            en: "Do you like spicy food?"
+                        }]
+                    },
+                    6: {
+                        title: {
+                            id: "UNIT 6: Hobi & Waktu Luang",
+                            en: "UNIT 6: Hobbies & Free Time 🎮"
+                        },
+                        description: {
+                            id: "Berbagi tentang hobi dan kegiatan di waktu luang.",
+                            en: "Sharing about hobbies and free time activities."
+                        },
+                        vocab: [{
+                            en: "Play games",
+                            id: "Bermain game",
+                            icon: "🕹️"
+                        }, {
+                            en: "Read books",
+                            id: "Membaca buku",
+                            icon: "📖"
+                        }, {
+                            en: "Listen to music",
+                            id: "Mendengar musik",
+                            icon: "🎧"
+                        }, {
+                            en: "Watch movies",
+                            id: "Menonton film",
+                            icon: "🎬"
+                        }],
+                        singAlong: [{
+                            id: "Nyanyikan lagu 'Perfect - Ed Sheeran'",
+                            en: "Sing the song 'Perfect - Ed Sheeran'",
+                            videoId: "cNGjD0VG4R8"
+                        }],
+                        dialogue: [{
+                            speaker: "Hans",
+                            text: "What do you usually do in your free time, Ina?"
+                        }, {
+                            speaker: "Ina",
+                            text: "On weekends, I usually listen to music and read books. It's very relaxing."
+                        }, {
+                            speaker: "Hans",
+                            text: "Cool! What kind of music are you into? And who is your favorite singer?"
+                        }, {
+                            speaker: "Ina",
+                            text: "I really like Pop and R&B. My favorite singer right now is Taylor Swift. Her lyrics are amazing. What about you, Hans?"
+                        }, {
+                            speaker: "Hans",
+                            text: "I'm more of a gamer. I love playing strategy games on my computer. It helps me think critically."
+                        }, {
+                            speaker: "Ina",
+                            text: "That sounds interesting. Maybe you can teach me how to play sometime!"
+                        }],
+                        duolingoPlay: [{
+                            id: "Dapatkan minimal 10 XP di Duolingo.",
+                            en: "Earn a minimum of 10 XP on Duolingo."
+                        }],
+                        interview: [{
+                            id: "Apa hobimu?",
+                            en: "What is your hobby?"
+                        }, {
+                            id: "Seberapa sering kamu melakukan hobimu?",
+                            en: "How often do you do your hobby?"
+                        }]
+                    },
+                    7: {
+                        title: {
+                            id: "UNIT 7: Tempat di Kota",
+                            en: "UNIT 7: Places in Town 🏛️"
+                        },
+                        description: {
+                            id: "Belajar nama-nama tempat di kota dan menanyakan arah.",
+                            en: "Learning names of places in town and asking for directions."
+                        },
+                        vocab: [{
+                            en: "Bank",
+                            id: "Bank",
+                            icon: "🏦"
+                        }, {
+                            en: "Library",
+                            id: "Perpustakaan",
+                            icon: "📚"
+                        }, {
+                            en: "Post office",
+                            id: "Kantor pos",
+                            icon: "✉️"
+                        }, {
+                            en: "Hospital",
+                            id: "Rumah sakit",
+                            icon: "🏥"
+                        }],
+                        singAlong: [{
+                            id: "Nyanyikan lagu 'Fight song - Rachel Platten'",
+                            en: "Sing the song 'Fight song - Rachel Platten'",
+                            videoId: "XbxNtPiCBK8"
+                        }],
+                        dialogue: [{
+                            speaker: "Joko",
+                            text: "Excuse me, I'm a bit lost. Can you tell me where the nearest bank is?"
+                        }, {
+                            speaker: "Kiki",
+                            text: "Of course. Go straight ahead on this street and turn left at the big traffic light. You will see a park."
+                        }, {
+                            speaker: "Joko",
+                            text: "Okay, turn left at the traffic light. Then what?"
+                        }, {
+                            speaker: "Kiki",
+                            text: "The bank is right across from the park, next to the post office. You can't miss it."
+                        }, {
+                            speaker: "Joko",
+                            text: "I see. Is it far from here? How long does it take to walk?"
+                        }, {
+                            speaker: "Kiki",
+                            text: "It's not far, just about a 5-minute walk. You're welcome!"
+                        }, {
+                            speaker: "Joko",
+                            text: "Thank you so much for your help!"
+                        }],
+                        duolingoPlay: [{
+                            id: "Dapatkan minimal 10 XP di Duolingo.",
+                            en: "Earn a minimum of 10 XP on Duolingo."
+                        }],
+                        interview: [{
+                            id: "Ke mana kamu biasa pergi di akhir pekan?",
+                            en: "Where do you usually go on weekends?"
+                        }, {
+                            id: "Apakah ada perpustakaan di dekat rumahmu?",
+                            en: "Is there a library near your house?"
+                        }]
+                    },
+                    8: {
+                        title: {
+                            id: "UNIT 8: Ulasan & Perpisahan",
+                            en: "UNIT 8: Review & Farewell 👋"
+                        },
+                        description: {
+                            id: "Mengulang apa yang telah dipelajari dan mengucapkan salam perpisahan.",
+                            en: "Reviewing what we've learned and saying goodbye."
+                        },
+                        vocab: [{
+                            en: "Review",
+                            id: "Ulasan",
+                            icon: "🔄"
+                        }, {
+                            en: "Learn",
+                            id: "Belajar",
+                            icon: "💡"
+                        }, {
+                            en: "Practice",
+                            id: "Berlatih",
+                            icon: "🗣️"
+                        }, {
+                            en: "Goodbye",
+                            id: "Selamat tinggal",
+                            icon: "👋"
+                        }],
+                        singAlong: [{
+                            id: "Nyanyikan lagu 'Fight song - Rachel Platten'",
+                            en: "Sing the song 'Fight song - Rachel Platten'",
+                            videoId: "XbxNtPiCBK8"
+                        }],
+                        dialogue: [{
+                            speaker: "Tutor",
+                            text: "Well everyone, this is our last session. So, what have you learned in this program?"
+                        }, {
+                            speaker: "Leo",
+                            text: "I learned so much! I was shy before, but now I can introduce myself and order food confidently."
+                        }, {
+                            speaker: "Maria",
+                            text: "For me, the most useful part was learning how to give directions. I also learned a lot of new vocabulary about school and hobbies."
+                        }, {
+                            speaker: "Tutor",
+                            text: "That's fantastic to hear! What was the most challenging part for you?"
+                        }, {
+                            speaker: "Leo",
+                            text: "Remembering all the new words was hard at first, but practicing on Duolingo every day really helped."
+                        }, {
+                            speaker: "Tutor",
+                            text: "Exactly! The key is to keep practicing your English every day, even just for a few minutes. I'm very proud of all of you. Keep up the great work!"
+                        }, {
+                            speaker: "Maria",
+                            text: "We will. Thank you for everything, Tutor! Goodbye!"
+                        }],
+                        duolingoPlay: [{
+                            id: "Dapatkan minimal 10 XP di Duolingo.",
+                            en: "Earn a minimum of 10 XP on Duolingo."
+                        }],
+                        interview: [{
+                            id: "Unit mana yang jadi favoritmu?",
+                            en: "What was your favorite unit?"
+                        }, {
+                            id: "Apa yang akan kamu lakukan untuk terus berlatih?",
+                            en: "What will you do to keep practicing?"
+                        }]
+                    }
+                };
+                const appState = {
+                    currentView: 'home',
+                    studentId: null,
+                    studentClass: null,
+                    ratings: {},
+                    trackerData: Array(8).fill(null).map( () => ({
+                        xp: 0,
+                        streak: 0
+                    }))
+                };
+
+                // --- DOM Elements ---
+                const mainContent = document.querySelector('.main-content');
+                const template = document.getElementById('unit-template');
+                const toast = document.getElementById('toast');
+
+                /**
+             * Sends a data payload to Firestore.
+             * @param {object} payload The data object to send.
+             * @param {HTMLButtonElement} [button] The button element for UI feedback.
+             * @param {Function} [onSuccessCallback] A function to run on successful save.
+             */
+                function sendDataToFirestore(payload, button, onSuccessCallback) {
+                    const fb = window.__fb || {};
+                    const {db, serverTimestamp, addDoc, collection, doc, setDoc} = fb;
+
+                    if (!db) {
+                        console.error("Firestore not initialized.");
+                        showToast("Koneksi database gagal. / Database connection failed.", true);
+                        return;
+                    }
+                    if (!appState.studentId && !payload.type.startsWith("teacher") && payload.type !== 'preTestData' && payload.type !== 'motivationData') {
+                        showToast("Harap pilih nama dan kelas Anda terlebih dahulu. / Please select your name and class first.", true);
+                        renderView("home");
+                        if (button) {
+                            button.disabled = false;
+                            button.classList.remove("opacity-50");
+                        }
+                        return;
+                    }
+
+                    let originalTextEl, originalText;
+                    if (button) {
+                        button.disabled = true;
+                        button.classList.add("opacity-50");
+                        originalTextEl = button.querySelector("span:last-child");
+                        originalText = originalTextEl ? originalTextEl.innerHTML : button.textContent;
+                        if (originalTextEl) {
+                            originalTextEl.innerHTML = `<span class="lang-id">Mengirim...</span><span class="lang-en">Sending...</span>`;
+                        } else {
+                            button.textContent = "Mengirim... / Sending...";
+                        }
+                    }
+
+                    const writes = [];
+                    try {
+                        if (payload.type === "teacherReport") {
+                            const rows = Array.isArray(payload.data) ? payload.data : [];
+                            rows.forEach(row => {
+                                const docData = {
+                                    ts: serverTimestamp(),
+                                    studentName: (row.studentName ?? "").toString(),
+                                    studentClass: (row.studentClass ?? "").toString(),
+                                    unit: (row.unit ?? "").toString(),
+                                    activity: (row.activity ?? "").toString(),
+                                    xp: Number.isFinite(+row.xp) ? +row.xp : 0,
+                                    streak: Number.isFinite(+row.streak) ? +row.streak : 0,
+                                    grade: Number.isFinite(+row.grade) ? +row.grade : 0,
+                                    comments: (row.comments ?? "").toString(),
+                                };
+                                writes.push(addDoc(collection(db, "teacherReports"), docData));
+                            }
+                            );
+                        } else if (payload.type === "teacherScores") {
+                            const rows = Array.isArray(payload.data) ? payload.data : [];
+                            rows.forEach(row => {
+                                const docData = {
+                                    ts: serverTimestamp(),
+                                    studentName: (row.studentName ?? "").toString(),
+                                    studentClass: (row.studentClass ?? "").toString(),
+                                    type: (row.type ?? "").toString(),
+                                    score: Number.isFinite(+row.score) ? +row.score : 0,
+                                    comments: (row.comments ?? "").toString(),
+                                };
+                                writes.push(addDoc(collection(db, "teacherScores"), docData));
+                            }
+                            );
+                        } else if (payload.type === "trackerData") {
+                            const snapshotDoc = {
+                                ts: serverTimestamp(),
+                                studentId: appState.studentId,
+                                studentClass: appState.studentClass,
+                                sessions: Array.isArray(payload.data) ? payload.data.map(s => ({
+                                    session: (s.session ?? "").toString(),
+                                    xp: Number.isFinite(+s.xp) ? +s.xp : 0,
+                                    streak: Number.isFinite(+s.streak) ? +s.streak : 0,
+                                })) : [],
+                            };
+                            writes.push(addDoc(collection(db, "students", appState.studentId, "tracker"), snapshotDoc));
+                        } else if (payload.type === "preTestData") {
+                            const testDocRef = doc(db, "students", appState.studentId, "tests", "preTest");
+                            const testPayload = {
+                                answers: payload.data,
+                                lastUpdated: serverTimestamp(),
+                                studentId: appState.studentId,
+                                studentClass: appState.studentClass
+                            };
+                            writes.push(setDoc(testDocRef, testPayload, {
+                                merge: true
+                            }));
+                        } else if (payload.type === "motivationData") {
+                            const motivationDocRef = doc(db, "students", appState.studentId, "tests", "motivation");
+                            const motivationPayload = {
+                                answers: payload.data,
+                                lastUpdated: serverTimestamp(),
+                                studentId: appState.studentId,
+                                studentClass: appState.studentClass
+                            };
+                            writes.push(setDoc(motivationDocRef, motivationPayload, {
+                                merge: true
+                            }));
+                        } else if (payload.type === "unitData") {
+                            const {unitId, section, data} = payload;
+                            if (!unitId || !section) {
+                                throw new Error("Missing unitId or section for unitData write.");
+                            }
+                            const unitDocRef = doc(db, "students", appState.studentId, "units", `unit_${unitId}`);
+                            const updatePayload = {
+                                [section]: data,
+                                lastUpdated: serverTimestamp(),
+                                studentId: appState.studentId,
+                                studentClass: appState.studentClass
+                            };
+                            writes.push(setDoc(unitDocRef, updatePayload, {
+                                merge: true
+                            }));
+                        } else if (payload.type === 'teacherUnitScore') {
+                            const {unitId, section, score} = payload;
+                            const scoreDocRef = doc(db, "students", appState.studentId, "scores", `unit_${unitId}`);
+                            const scorePayload = {
+                                [section]: {
+                                    score: score,
+                                    gradedBy: "teacher",
+                                    // Or a teacher ID if you have teacher auth
+                                    gradedAt: serverTimestamp()
+                                },
+                                studentId: appState.studentId,
+                                studentClass: appState.studentClass
+                            };
+                            writes.push(setDoc(scoreDocRef, scorePayload, {
+                                merge: true
+                            }));
+                        } else {
+                            throw new Error(`Unknown payload type: ${payload.type}`);
+                        }
+                    } catch (err) {
+                        console.error("Error preparing Firestore writes:", err);
+                        showToast("Gagal menyimpan data. / Failed to save data.", true);
+                        if (button) {
+                            button.disabled = false;
+                            button.classList.remove("opacity-50");
+                            if (originalTextEl)
+                                originalTextEl.innerHTML = originalText;
+                            else
+                                button.textContent = originalText;
+                        }
+                        return;
+                    }
+
+                    Promise.all(writes).then( () => {
+                        if (!button) {
+                            console.log("Autosave successful.")
+                        } else {
+                            showToast("Data berhasil disimpan. / Saved successfully.");
+                        }
+                        if (onSuccessCallback)
+                            onSuccessCallback();
+                    }
+                    ).catch(err => {
+                        console.error("Firestore write failed:", err);
+                        showToast("Gagal menyimpan ke database. / Failed to save to database.", true);
+                    }
+                    ).finally( () => {
+                        if (button) {
+                            button.disabled = false;
+                            button.classList.remove("opacity-50");
+                            if (originalTextEl)
+                                originalTextEl.innerHTML = originalText;
+                            else
+                                button.textContent = originalText;
+                        }
+                    }
+                    );
+                }
+
+                // --- Core Functions ---
+                function showToast(message, isError=false) {
+                    toast.textContent = message;
+                    toast.className = `fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transform translate-y-2 ${isError ? 'bg-red-600' : 'bg-gray-800'}`;
+                    toast.classList.remove('opacity-0', 'translate-y-2');
+                    setTimeout( () => toast.classList.add('opacity-100', 'translate-y-0'), 10);
+                    setTimeout( () => {
+                        toast.classList.remove('opacity-100', 'translate-y-0');
+                        toast.classList.add('opacity-0', 'translate-y-2');
+                    }
+                    , 3000);
+                }
+
+                function renderView(viewId) {
+                    document.querySelectorAll('.main-content > div').forEach(div => div.classList.remove('active'));
+                    const activeDiv = document.getElementById(viewId);
+                    if (activeDiv)
+                        activeDiv.classList.add('active');
+
+                    appState.currentView = viewId;
+                    if (viewId === 'tracker') {
+                        const isTeacher = sessionStorage.getItem('isTeacher') === 'true';
+                        document.getElementById('student-tracker-view').style.display = isTeacher ? 'none' : 'block';
+                        document.getElementById('teacher-tracker-view').style.display = isTeacher ? 'block' : 'none';
+                    }
+                }
+
+                // --- Initialization ---
+                function initializeApp() {
+                    // Populate student and class dropdowns
+                    const studentNameInputEl = document.getElementById('student-name-input');
+                    studentNameInputEl.innerHTML = `<option value="" disabled selected>Select Name</option>` + studentList.map(name => `<option value="${name}">${name}</option>`).join('');
+                    const studentClassInputEl = document.getElementById('student-class-input');
+                    studentClassInputEl.innerHTML = `<option value="" disabled selected>Select Class</option>` + classList.map(cls => `<option value="${cls}">${cls}</option>`).join('');
+
+                    // Create Pre-test questions
+                    createPretestQuestions();
+
+                    // Create Motivation questions
+                    createMotivationQuestions();
+
+                    // Create unit pages from template
+                    for (let i = 1; i <= 8; i++)
+                        createUnitPage(i);
+                    template.remove();
+
+                    // Create mobile navigation
+                    createMobileNav();
+
+                    // Setup Chart.js
+                    setupChart();
+
+                    // Load saved state
+                    loadInitialState();
+
+                    // Attach all event listeners
+                    attachEventListeners();
+
+                    // Set initial view
+                    renderView('home');
+                }
+
+                // --- Page & Component Builders ---
+                function createPretestQuestions() {
+                    const container = document.getElementById('pretest-questions-container');
+                    container.innerHTML = '';
+                    pretestQuestions.forEach( (item, index) => {
+                        const qNum = index + 1;
+                        const optionsHtml = item.o.map( (opt, i) => {
+                            const optionLetter = String.fromCharCode(97 + i);
+                            // a, b, c, d
+                            return `<div><label class="flex items-center"><input type="radio" name="q${qNum}" value="${optionLetter}" class="mr-2 h-4 w-4 text-[#78C800] focus:ring-[#58a700]"> ${optionLetter}. ${opt}</label></div>`;
+                        }
+                        ).join('');
+
+                        const questionHtml = `
+                        <div>
+                            <p class="font-semibold">${item.q}</p>
+                            <div class="mt-2 space-y-2">${optionsHtml}</div>
+                        </div>`;
+                        container.innerHTML += questionHtml;
+                    }
+                    );
+                }
+
+                function createMotivationQuestions() {
+                    const container = document.getElementById('motivation-questions-container');
+                    container.innerHTML = '';
+                    const ratingLabels = {
+                        id: ['Sangat Tidak Setuju', 'Tidak Setuju', 'Ragu-Ragu', 'Setuju', 'Sangat Setuju'],
+                        en: ['Strongly Disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly Agree']
+                    };
+
+                    for (const key in motivationQuestions) {
+                        const section = motivationQuestions[key];
+                        let questionsHtml = '';
+                        section.questions.forEach(q => {
+                            const optionsHtml = ratingLabels.id.map( (label_id, index) => {
+                                const label_en = ratingLabels.en[index];
+                                return `
+                            <label class="flex flex-col items-center space-y-1 cursor-pointer">
+                                <input type="radio" name="mq${q.id}" value="${index + 1}" class="h-4 w-4 text-[#78C800] focus:ring-[#58a700]">
+                                <span class="text-xs text-center">
+                                    <span class="lang-id">${label_id}</span>
+                                    <span class="lang-en">${label_en}</span>
+                                </span>
+                            </label>
+                        `
+                            }
+                            ).join('');
+
+                            questionsHtml += `
+                            <div class="py-4 border-b">
+                                <p><span class="lang-id">${q.id}. ${q.text_id}</span><span class="lang-en">${q.id}. ${q.text_en}</span></p>
+                                <div class="mt-3 grid grid-cols-5 gap-2 text-center">${optionsHtml}</div>
+                            </div>
+                        `;
+                        }
+                        );
+
+                        container.innerHTML += `
+                        <div class="p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                            <h3 class="text-xl font-bold text-gray-700">
+                                <span class="lang-id">${key}. ${section.title_id}</span>
+                                <span class="lang-en">${key}. ${section.title_en}</span>
+                            </h3>
+                            <div class="mt-4 space-y-4">${questionsHtml}</div>
+                        </div>
+                    `;
+                    }
+                }
+
+                function createUnitPage(unitId) {
+                    const data = unitData[unitId];
+                    if (!data)
+                        return;
+                    const unitContainer = document.getElementById(`unit${unitId}`);
+                    const clone = template.cloneNode(true);
+                    clone.id = '';
+                    clone.setAttribute('data-unit-number', unitId);
+                    clone.querySelector('.unit-title').innerHTML = `<span class="lang-id">${data.title.id}</span><span class="lang-en">${data.title.en}</span>`;
+                    clone.querySelector('.unit-description').innerHTML = `<span class="lang-id">${data.description.id}</span><span class="lang-en">${data.description.en}</span>`;
+
+                    // Vocab list and forms
+                    const vocabList = clone.querySelector('.vocab-list');
+                    const vocabForm = clone.querySelector('.vocab-examples-form');
+                    data.vocab.forEach(word => {
+                        vocabList.innerHTML += `<div class="bg-gray-50 p-3 rounded-lg text-center"><div class="text-3xl">${word.icon}</div><div class="font-semibold mt-2">${word.en}</div><div class="text-sm text-gray-500">${word.id}</div></div>`;
+                        vocabForm.innerHTML += `<div><label for="vocab-u${unitId}-${word.en}" class="font-semibold text-gray-700">${word.en}:</label><input type="text" id="vocab-u${unitId}-${word.en}" data-word="${word.en}" class="mt-1 w-full p-2 border border-gray-300 rounded-md" placeholder="Tulis kalimatmu... / Write your sentence..."></div>`;
+                    }
+                    );
+
+                    // Sing Along section
+                    const singAlongContainer = clone.querySelector('.sing-along-tasks');
+                    data.singAlong.forEach( (task, i) => {
+                        singAlongContainer.innerHTML += `<div class="mb-4"><div class="flex items-center"><input type="checkbox" id="sa-u${unitId}-t${i}" class="h-5 w-5 rounded border-gray-300 text-[#78C800] focus:ring-[#58a700]" data-section="singAlong" data-unit="${unitId}" data-task-index="${i}"><label for="sa-u${unitId}-t${i}" class="ml-3 text-gray-700"><span class="lang-id">${task.id}</span><span class="lang-en">${task.en}</span></label> ${task.videoId ? `<a href="https://www.youtube.com/watch?v=${task.videoId}" target="_blank" class="ml-4 text-sm text-blue-600 hover:underline">(<span class="lang-id">Tonton Video</span><span class="lang-en">Watch Video</span>)</a>` : ''}</div></div>`;
+                    }
+                    );
+
+                    // Dialogue section
+                    const dialogueContainer = clone.querySelector('.dialogue-practice-area');
+                    data.dialogue.forEach( (line, index) => {
+                        dialogueContainer.innerHTML += `<div class="flex items-end gap-2 ${index % 2 !== 0 ? 'justify-end' : ''}"><div class="max-w-xs md:max-w-md p-3 rounded-2xl ${index % 2 !== 0 ? 'bg-[#78C800] text-white rounded-br-none' : 'bg-gray-200 rounded-bl-none'}"><b>${line.speaker}:</b> ${line.text}</div></div>`;
+                    }
+                    );
+
+                    // Interview section
+                    const interviewContainer = clone.querySelector('.peer-interview');
+                    data.interview.forEach( (q, i) => {
+                        interviewContainer.innerHTML += `<div><label for="q${unitId}-${i}" class="font-semibold text-gray-700">${i + 1}. <span class="lang-id">${q.id}</span><span class="lang-en">${q.en}</span></label><input type="text" id="q${unitId}-${i}" class="mt-2 w-full p-2 border border-gray-300 rounded-md" placeholder="Jawaban temanmu / Your friend's answer..."></div>`;
+                    }
+                    );
+
+                    // Duolingo Play section
+                    const duolingoContainer = clone.querySelector('.duolingo-play-tasks');
+                    data.duolingoPlay.forEach( (task, i) => {
+                        duolingoContainer.innerHTML += `<div class="flex items-center"><input type="checkbox" id="dp-u${unitId}-t${i}" class="h-5 w-5 rounded border-gray-300 text-[#78C800] focus:ring-[#58a700]" data-section="duolingoPlay" data-unit="${unitId}" data-task-index="${i}"><label for="dp-u${unitId}-t${i}" class="ml-3 text-gray-700"><span class="lang-id">${task.id}</span><span class="lang-en">${task.en}</span></label></div>`;
+                    }
+                    );
+
+                    unitContainer.appendChild(clone);
+                }
+
+                function createMobileNav() {
+                    const mobileUnitNav = document.getElementById('mobile-unit-nav');
+                    if (!mobileUnitNav)
+                        return;
+                    for (let i = 1; i <= 8; i++) {
+                        const unit = unitData[i];
+                        if (unit) {
+                            const icon = document.querySelector(`#nav-links a[data-target="unit${i}"] span:first-child`).textContent;
+                            const titleId = unit.title.id.split(':')[1].trim();
+                            const titleEn = unit.title.en.split(':')[1].replace(/[^\w\s&]/g, '').trim();
+                            mobileUnitNav.innerHTML += `<a href="#" data-target="unit${i}" class="quick-nav-link bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col items-center justify-center text-center hover:bg-gray-50 transition-colors"><div class="text-3xl">${icon}</div><p class="mt-2 font-semibold text-sm text-gray-800"><span class="lang-id">${titleId}</span><span class="lang-en">${titleEn}</span></p></a>`;
+                        }
+                    }
+                }
+
+                let progressChart;
+                function setupChart() {
+                    const chartCtx = document.getElementById('progressChart').getContext('2d');
+                    progressChart = new Chart(chartCtx,{
+                        type: 'bar',
+                        data: {
+                            labels: appState.trackerData.map( (_, i) => `Sesi ${i + 1}`),
+                            datasets: [{
+                                label: 'XP Didapat',
+                                data: appState.trackerData.map(d => d.xp),
+                                backgroundColor: '#78C800',
+                                borderRadius: 5
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: '#e5e7eb'
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    backgroundColor: '#333',
+                                    padding: 10,
+                                    cornerRadius: 5
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // --- State Management ---
+                function loadInitialState() {
+                    const savedLang = localStorage.getItem('language') || 'en';
+                    updateLanguage(savedLang);
+
+                    const savedStudentId = localStorage.getItem('studentId');
+                    const savedStudentClass = localStorage.getItem('studentClass');
+                    if (savedStudentId && savedStudentClass) {
+                        setupStudent(savedStudentId, savedStudentClass);
+                    }
+
+                    if (sessionStorage.getItem('isTeacher') === 'true') {
+                        document.body.classList.add('teacher-mode');
+                        document.getElementById('teacher-section').style.display = 'block';
+                        document.getElementById('teacher-login-container').style.display = 'none';
+                    }
+
+                    appState.trackerData.forEach( (data, index) => {
+                        document.querySelector('#tracker-table tbody').innerHTML += `<tr class="border-b"><td class="p-3 font-semibold">${index + 1}</td><td class="p-3"><input type="number" class="w-20 p-1 border rounded" data-type="xp" data-index="${index}" value="${data.xp}"></td><td class="p-3"><input type="number" class="w-20 p-1 border rounded" data-type="streak" data-index="${index}" value="${data.streak}"></td></tr>`;
+                    }
+                    );
+                }
+
+                function setupStudent(name, studentClass) {
+                    appState.studentId = name;
+                    appState.studentClass = studentClass;
+                    localStorage.setItem('studentId', name);
+                    localStorage.setItem('studentClass', studentClass);
+
+                    document.getElementById('student-name-display').textContent = name;
+                    document.getElementById('student-class-display').textContent = `(${studentClass})`;
+                    document.getElementById('welcome-name-id').textContent = name;
+                    document.getElementById('welcome-name-en').textContent = name;
+
+                    document.getElementById('student-setup').style.display = 'none';
+                    document.getElementById('student-welcome').style.display = 'block';
+                    document.getElementById('student-display').style.display = 'block';
+                }
+
+                function updateLanguage(lang) {
+                    document.body.classList.toggle('en', lang === 'en');
+                    localStorage.setItem('language', lang);
+                    document.getElementById('lang-btn-id').classList.toggle('active', lang === 'id');
+                    document.getElementById('lang-btn-en').classList.toggle('active', lang === 'en');
+                }
+
+                // --- Event Listeners ---
+                function attachEventListeners() {
+                    document.getElementById('lang-btn-id').addEventListener('click', () => updateLanguage('id'));
+                    document.getElementById('lang-btn-en').addEventListener('click', () => updateLanguage('en'));
+
+                    document.querySelector('.nav-link-header').addEventListener('click', (e) => {
+                        e.preventDefault();
+                        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                        document.querySelector('.nav-link[data-target="home"]').classList.add('active');
+                        renderView('home');
+                    }
+                    );
+
+                    document.getElementById('menu-toggle').addEventListener('click', () => {
+                        document.getElementById('nav-links').classList.toggle('hidden');
+                    }
+                    );
+
+                    document.querySelectorAll('.nav-link').forEach(link => {
+                        link.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const targetId = link.dataset.target;
+
+                            if (targetId !== 'home' && !appState.studentId) {
+                                showToast('Harap pilih nama dan kelas Anda terlebih dahulu. / Please select your name and class first.', true);
+                                return;
+                            }
+
+                            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                            link.classList.add('active');
+                            if (window.innerWidth < 768)
+                                document.getElementById('nav-links').classList.add('hidden');
+                            renderView(targetId);
+                        }
+                        );
+                    }
+                    );
+
+                    document.getElementById('mobile-unit-nav').addEventListener('click', (e) => {
+                        const link = e.target.closest('.quick-nav-link');
+                        if (link) {
+                            e.preventDefault();
+                            const targetId = link.dataset.target;
+
+                            if (!appState.studentId) {
+                                showToast('Harap pilih nama dan kelas Anda terlebih dahulu. / Please select your name and class first.', true);
+                                return;
+                            }
+
+                            renderView(targetId);
+                            document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('active'));
+                            document.querySelector(`#nav-links a[data-target="${targetId}"]`)?.classList.add('active');
+                        }
+                    }
+                    );
+
+                    document.getElementById('student-form').addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        const name = document.getElementById('student-name-input').value;
+                        const sClass = document.getElementById('student-class-input').value;
+                        if (name && sClass)
+                            setupStudent(name, sClass);
+                    }
+                    );
+
+                    document.getElementById('change-student').addEventListener('click', () => {
+                        localStorage.removeItem('studentId');
+                        localStorage.removeItem('studentClass');
+                        appState.studentId = null;
+                        appState.studentClass = null;
+                        document.getElementById('student-setup').style.display = 'block';
+                        document.getElementById('student-welcome').style.display = 'none';
+                        document.getElementById('student-display').style.display = 'none';
+                        renderView('home');
+                    }
+                    );
+
+                    // --- Main Content Interactions ---
+                    mainContent.addEventListener('click', handleMainContentClick);
+                    mainContent.addEventListener('change', handleMainContentChange);
+
+                    const pretestForm = document.getElementById('pretest-form');
+                    pretestForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        const button = document.getElementById('submit-pretest-btn');
+                        const formData = new FormData(pretestForm);
+                        const answers = Object.fromEntries(formData.entries());
+
+                        if (Object.keys(answers).length < pretestQuestions.length) {
+                            showToast('Harap jawab semua pertanyaan sebelum mengirim. / Please answer all questions before submitting.', true);
+                            return;
+                        }
+
+                        const onSuccess = () => {
+                            pretestForm.style.display = 'none';
+                            document.getElementById('pretest-complete-view').style.display = 'block';
+                        }
+                        ;
+
+                        sendDataToFirestore({
+                            type: 'preTestData',
+                            data: answers
+                        }, button, onSuccess);
+                    }
+                    );
+
+                    pretestForm.addEventListener('change', () => {
+                        const formData = new FormData(pretestForm);
+                        const answers = Object.fromEntries(formData.entries());
+                        if (Object.keys(answers).length > 0) {
+                            sendDataToFirestore({
+                                type: 'preTestData',
+                                data: answers
+                            });
+                            // No button for silent auto-save
+                        }
+                    }
+                    );
+
+                    document.getElementById('back-to-home-btn').addEventListener('click', () => {
+                        document.querySelector('.nav-link[data-target="home"]').click();
+                    }
+                    );
+
+                    const motivationForm = document.getElementById('motivation-form');
+                    motivationForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        const button = document.getElementById('submit-motivation-btn');
+                        const formData = new FormData(motivationForm);
+                        const answers = Object.fromEntries(formData.entries());
+
+                        const totalQuestions = Object.values(motivationQuestions).reduce( (acc, section) => acc + section.questions.length, 0);
+                        if (Object.keys(answers).length < totalQuestions) {
+                            showToast('Harap jawab semua pertanyaan sebelum mengirim. / Please answer all questions before submitting.', true);
+                            return;
+                        }
+
+                        const onSuccess = () => {
+                            motivationForm.style.display = 'none';
+                            document.getElementById('motivation-complete-view').style.display = 'block';
+                        }
+                        ;
+
+                        sendDataToFirestore({
+                            type: 'motivationData',
+                            data: answers
+                        }, button, onSuccess);
+                    }
+                    );
+
+                    motivationForm.addEventListener('change', () => {
+                        const formData = new FormData(motivationForm);
+                        const answers = Object.fromEntries(formData.entries());
+                        if (Object.keys(answers).length > 0) {
+                            sendDataToFirestore({
+                                type: 'motivationData',
+                                data: answers
+                            });
+                        }
+                    }
+                    );
+
+                    document.getElementById('motivation-back-to-home-btn').addEventListener('click', () => {
+                        document.querySelector('.nav-link[data-target="home"]').click();
+                    }
+                    );
+
+                    // --- Teacher Mode ---
+                    document.getElementById('teacher-mode-btn').addEventListener('click', () => document.getElementById('teacher-modal').style.display = 'flex');
+                    document.getElementById('cancel-teacher-modal').addEventListener('click', () => document.getElementById('teacher-modal').style.display = 'none');
+                    document.getElementById('submit-teacher-password').addEventListener('click', handleTeacherLogin);
+                    document.getElementById('exit-teacher-mode-btn').addEventListener('click', handleTeacherLogout);
+
+                    // --- Teacher Report Tables ---
+                    document.getElementById('teacher-tracker-view').addEventListener('click', handleTeacherTableClicks);
+                    document.getElementById('add-report-entry-btn').addEventListener('click', () => addTeacherTableRow('report'));
+                    document.getElementById('save-report-btn').addEventListener('click', (e) => saveTeacherTableData('report', e.target));
+                    document.getElementById('add-pre-post-test-entry-btn').addEventListener('click', () => addTeacherTableRow('pre-post'));
+                    document.getElementById('save-pre-post-test-btn').addEventListener('click', (e) => saveTeacherTableData('pre-post', e.target));
+                    document.getElementById('add-motivation-entry-btn').addEventListener('click', () => addTeacherTableRow('motivation'));
+                    document.getElementById('save-motivation-btn').addEventListener('click', (e) => saveTeacherTableData('motivation', e.target));
+                }
+
+                // --- Event Handlers ---
+                function handleMainContentClick(e) {
+                    const button = e.target.closest('.save-section-button');
+                    const star = e.target.closest('.star-rating span');
+                    const teacherScoreBtn = e.target.closest('.save-teacher-score-button');
+                    const unitPage = e.target.closest('.unit-page');
+
+                    if (button && unitPage) {
+                        const unitId = unitPage.dataset.unitNumber;
+                        const section = button.dataset.section;
+                        let data;
+                        if (section === 'vocabulary') {
+                            data = {};
+                            unitPage.querySelectorAll('.vocab-examples-form input').forEach(i => data[i.dataset.word] = i.value);
+                        } else if (section === 'interview') {
+                            data = {};
+                            unitPage.querySelectorAll('.peer-interview input').forEach(i => {
+                                const q = document.querySelector(`label[for="${i.id}"] .lang-en`).textContent.trim();
+                                data[q] = i.value;
+                            }
+                            );
+                        } else if (section === 'duolingoPlay') {
+                            data = {
+                                tasks: Array.from(unitPage.querySelectorAll('.duolingo-play-tasks input')).map(cb => ({
+                                    task: unitData[unitId].duolingoPlay[cb.dataset.taskIndex].en,
+                                    completed: cb.checked
+                                })),
+                                xp: unitPage.querySelector('.duolingo-xp-input').value || 0,
+                                streak: unitPage.querySelector('.duolingo-streak-input').value || 0
+                            };
+                        }
+                        if (data)
+                            sendDataToFirestore({
+                                type: 'unitData',
+                                unitId,
+                                section,
+                                data
+                            }, button);
+                    }
+
+                    if (star && unitPage) {
+                        const value = parseInt(star.dataset.value);
+                        appState.ratings[unitPage.dataset.unitNumber] = value;
+                        star.parentElement.querySelectorAll('span').forEach( (s, i) => s.style.color = i < value ? '#facc15' : '');
+                        sendDataToFirestore({
+                            type: 'unitData',
+                            unitId: unitPage.dataset.unitNumber,
+                            section: 'reflection',
+                            data: {
+                                rating: value
+                            }
+                        });
+                    }
+
+                    if (teacherScoreBtn && unitPage) {
+                        const scoreInput = teacherScoreBtn.previousElementSibling;
+                        const score = scoreInput.value;
+                        const section = scoreInput.dataset.section;
+                        const unitId = unitPage.dataset.unitNumber;
+                        if (score) {
+                            sendDataToFirestore({
+                                type: 'teacherUnitScore',
+                                unitId,
+                                section,
+                                score
+                            }, teacherScoreBtn, () => {
+                                const reportData = {
+                                    studentName: appState.studentId,
+                                    studentClass: appState.studentClass,
+                                    unit: `Unit ${unitId}`,
+                                    activity: section.charAt(0).toUpperCase() + section.slice(1),
+                                    // Capitalize
+                                    grade: score,
+                                    comments: 'Scored from unit page'
+                                };
+                                sendDataToFirestore({
+                                    type: 'teacherReport',
+                                    data: [reportData]
+                                });
+                            }
+                            );
+                        } else {
+                            showToast("Please enter a score.", true);
+                        }
+                    }
+                }
+
+                function handleMainContentChange(e) {
+                    const target = e.target;
+                    const unitPage = target.closest('.unit-page');
+                    if (!unitPage || !target.matches('input[type="checkbox"][data-section]'))
+                        return;
+
+                    const unitId = unitPage.dataset.unitNumber;
+                    const section = target.dataset.section;
+
+                    const allCheckboxes = unitPage.querySelectorAll(`input[data-section="${section}"]`);
+                    const tasksData = Array.from(allCheckboxes).map(cb => {
+                        const taskIndex = cb.dataset.taskIndex;
+                        return {
+                            task: unitData[unitId][section][taskIndex].en,
+                            completed: cb.checked
+                        };
+                    }
+                    );
+
+                    let data = (section === 'duolingoPlay') ? {
+                        tasks: tasksData
+                    } : tasksData;
+                    sendDataToFirestore({
+                        type: 'unitData',
+                        unitId,
+                        section,
+                        data
+                    });
+                }
+
+                function handleTeacherLogin() {
+                    const password = document.getElementById('teacher-password-input');
+                    if (password.value === 'GURU123') {
+                        sessionStorage.setItem('isTeacher', 'true');
+                        document.body.classList.add('teacher-mode');
+                        document.getElementById('teacher-section').style.display = 'block';
+                        document.getElementById('teacher-login-container').style.display = 'none';
+                        document.getElementById('teacher-modal').style.display = 'none';
+                        showToast('Mode guru diaktifkan. / Teacher mode activated.');
+                        renderView(appState.currentView);
+                    } else {
+                        showToast('Kode akses salah. / Incorrect access code.', true);
+                    }
+                    password.value = '';
+                }
+
+                function handleTeacherLogout() {
+                    sessionStorage.removeItem('isTeacher');
+                    document.body.classList.remove('teacher-mode');
+                    document.getElementById('teacher-section').style.display = 'none';
+                    document.getElementById('teacher-login-container').style.display = 'block';
+                    showToast('Mode guru dinonaktifkan. / Teacher mode deactivated.');
+                    renderView(appState.currentView);
+                }
+
+                function handleTeacherTableClicks(e) {
+                    const duplicateBtn = e.target.closest('.duplicate-teacher-row');
+                    const removeBtn = e.target.closest('.remove-teacher-row');
+
+                    if (removeBtn) {
+                        removeBtn.closest('tr').remove();
+                    }
+
+                    if (duplicateBtn) {
+                        const row = duplicateBtn.closest('tr');
+                        const tableBody = row.parentElement;
+                        const inputs = row.querySelectorAll('select, input');
+                        let rowData = {};
+                        let type;
+
+                        if (tableBody.id === 'teacher-report-body') {
+                            type = 'report';
+                            rowData = {
+                                studentName: inputs[0].value,
+                                studentClass: inputs[1].value,
+                                unit: inputs[2].value,
+                                activity: inputs[3].value,
+                                xp: inputs[4].value,
+                                streak: inputs[5].value,
+                                grade: inputs[6].value,
+                                comments: inputs[7].value
+                            };
+                        } else if (tableBody.id === 'pre-post-test-body') {
+                            type = 'pre-post';
+                            rowData = {
+                                studentName: inputs[0].value,
+                                studentClass: inputs[1].value,
+                                testType: inputs[2].value,
+                                score: inputs[3].value,
+                                comments: inputs[4].value
+                            };
+                        } else if (tableBody.id === 'motivation-body') {
+                            type = 'motivation';
+                            rowData = {
+                                studentName: inputs[0].value,
+                                studentClass: inputs[1].value,
+                                score: inputs[2].value,
+                                comments: inputs[3].value
+                            };
+                        }
+                        if (type)
+                            addTeacherTableRow(type, rowData);
+                    }
+                }
+
+                // --- Teacher Table Logic ---
+                function addTeacherTableRow(type, data={}) {
+                    const tbody = document.getElementById(type === 'report' ? 'teacher-report-body' : type === 'pre-post' ? 'pre-post-test-body' : 'motivation-body');
+                    const newRow = document.createElement('tr');
+                    const studentOptions = studentList.map(name => `<option value="${name}" ${data.studentName === name ? 'selected' : ''}>${name}</option>`).join('');
+                    const classOptions = classList.map(cls => `<option value="${cls}" ${data.studentClass === cls ? 'selected' : ''}>${cls}</option>`).join('');
+
+                    let rowHtml = `
+                    <td class="p-2"><select class="w-full p-1 border rounded bg-white">${studentOptions}</select></td>
+                    <td class="p-2"><select class="w-full p-1 border rounded bg-white">${classOptions}</select></td>
+                `;
+
+                    if (type === 'report') {
+                        const unitOptions = Array.from({
+                            length: 8
+                        }, (_, i) => `<option ${data.unit === `Unit ${i + 1}` ? 'selected' : ''}>Unit ${i + 1}</option>`).join('');
+                        const activityOptions = ['Sing Along', 'New Vocabulary', 'Dialogue Example', 'Speaking Practice', 'Duolingo Play', 'Self Reflection'].map(act => `<option ${data.activity === act ? 'selected' : ''}>${act}</option>`).join('');
+                        rowHtml += `
+                        <td class="p-2"><select class="w-full p-1 border rounded bg-white">${unitOptions}</select></td>
+                        <td class="p-2"><select class="w-full p-1 border rounded bg-white">${activityOptions}</select></td>
+                        <td class="p-2"><input type="number" class="w-20 p-1 border rounded" placeholder="XP" value="${data.xp || ''}"></td>
+                        <td class="p-2"><input type="number" class="w-20 p-1 border rounded" placeholder="Streak" value="${data.streak || ''}"></td>
+                        <td class="p-2"><input type="number" class="w-20 p-1 border rounded" placeholder=".../100" value="${data.grade || ''}"></td>`;
+                    } else if (type === 'pre-post') {
+                        rowHtml += `
+                        <td class="p-2"><select class="w-full p-1 border rounded bg-white">
+                            <option ${data.testType === 'Pre-Test' ? 'selected' : ''}>Pre-Test</option>
+                            <option ${data.testType === 'Post-Test' ? 'selected' : ''}>Post-Test</option>
+                        </select></td>
+                        <td class="p-2"><input type="number" class="w-20 p-1 border rounded" placeholder=".../100" value="${data.score || ''}"></td>`;
+                    } else {
+                        // motivation
+                        rowHtml += `<td class="p-2"><input type="number" class="w-20 p-1 border rounded" placeholder="1-5" min="1" max="5" value="${data.score || ''}"></td>`;
+                    }
+                    rowHtml += `
+                    <td class="p-2"><input type="text" class="w-full p-1 border rounded" placeholder="Komentar" value="${data.comments || ''}"></td>
+                    <td class="p-2 flex space-x-2">
+                        <button type="button" class="duplicate-teacher-row text-blue-500 hover:text-blue-700">📋</button>
+                        <button type="button" class="remove-teacher-row text-red-500 hover:text-red-700">✖</button>
+                    </td>`;
+
+                    newRow.innerHTML = rowHtml;
+                    tbody.appendChild(newRow);
+                }
+
+                function saveTeacherTableData(type, button) {
+                    const tbodyId = type === 'report' ? 'teacher-report-body' : type === 'pre-post' ? 'pre-post-test-body' : 'motivation-body';
+                    const rows = document.querySelectorAll(`#${tbodyId} tr`);
+                    const dataToSave = [];
+                    let payloadType = 'teacherReport';
+
+                    rows.forEach(row => {
+                        const inputs = row.querySelectorAll('select, input');
+                        if (inputs[0].value.trim() === '')
+                            return;
+                        // Skip empty rows
+                        let entry = {};
+                        if (type === 'report') {
+                            entry = {
+                                studentName: inputs[0].value,
+                                studentClass: inputs[1].value,
+                                unit: inputs[2].value,
+                                activity: inputs[3].value,
+                                xp: inputs[4].value,
+                                streak: inputs[5].value,
+                                grade: inputs[6].value,
+                                comments: inputs[7].value
+                            };
+                        } else {
+                            // pre-post or motivation
+                            payloadType = 'teacherScores';
+                            if (type === 'pre-post') {
+                                entry = {
+                                    studentName: inputs[0].value,
+                                    studentClass: inputs[1].value,
+                                    type: inputs[2].value,
+                                    score: inputs[3].value,
+                                    comments: inputs[4].value
+                                };
+                            } else {
+                                // motivation
+                                entry = {
+                                    studentName: inputs[0].value,
+                                    studentClass: inputs[1].value,
+                                    type: 'Motivation',
+                                    score: inputs[2].value,
+                                    comments: inputs[3].value
+                                };
+                            }
+                        }
+                        dataToSave.push(entry);
+                    }
+                    );
+
+                    if (dataToSave.length > 0) {
+                        sendDataToFirestore({
+                            type: payloadType,
+                            data: dataToSave
+                        }, button);
+                    } else {
+                        showToast('Tidak ada data untuk disimpan. / No data to save.', true);
+                    }
+                }
+
+                // --- GO! ---
+                initializeApp();
+            });
+        </script>
+    </body>
+</html>
