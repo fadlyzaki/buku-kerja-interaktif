@@ -48,7 +48,7 @@ A single-page web application that delivers 8 learning units with interactive ex
 
 | Feature | Description |
 |---------|-------------|
-| **Teacher Mode** | Password-protected mode (`teacher123`) with additional controls |
+| **Teacher Mode** | Password-protected mode with additional controls |
 | **Manual Grading** | Per-section score inputs (vocabulary, dialogue, interview) |
 | **Report Dashboard** | Add entries for student progress with XP, streak, grade, and comments |
 | **Pre/Post-Test Dashboard** | Visual comparison of pre-test and post-test scores per student |
@@ -108,7 +108,7 @@ teacherObservations/     — Observation notes
 ### 4.3 Authentication
 
 - **Students:** Anonymous Auth (auto-generated UID)
-- **Teachers:** Simple password prompt (`teacher123`)
+- **Teachers:** Password-protected prompt (configured in application)
 
 ---
 

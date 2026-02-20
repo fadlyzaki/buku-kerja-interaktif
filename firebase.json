@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "buku-kerja-interaktif",
     "public": "public",
     "ignore": [
       "firebase.json",

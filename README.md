@@ -54,15 +54,13 @@ firebase deploy
 
 ```
 buku-kerja-interaktif/
-├── index.html              # Main application (single-file SPA)
-├── [current]index.html     # Bilingual class variant
 ├── firebase.json           # Firebase Hosting config
 ├── .firebaserc             # Firebase project config
 ├── docs/
 │   └── PRD.md              # Product Requirements Document
-└── public/
-    ├── index.html           # Hosted entry point
-    ├── app.js               # Application logic
+└── public/                 # Deployed application (single source of truth)
+    ├── index.html           # HTML shell with Firebase init
+    ├── app.js               # Application logic (SPA)
     ├── geera-logo.jpg       # Logo asset
     └── 404.html             # Error page
 ```
