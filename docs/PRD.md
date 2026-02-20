@@ -124,7 +124,60 @@ teacherObservations/     — Observation notes
 
 ---
 
-## 6. Future Considerations
+## 6. AI Capabilities (Planned)
+
+### 6.1 AI Conversation Tutor
+
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| **Chat-Based Speaking Practice** | AI-powered chatbot that simulates real English conversations, replacing static dialogue scripts with dynamic, context-aware responses | 🔴 High |
+| **Pronunciation Feedback** | Speech-to-text with AI scoring on pronunciation accuracy, fluency, and intonation | 🟡 Medium |
+| **Grammar Correction** | Real-time grammar suggestions on student-written sentences (vocabulary exercises) | 🔴 High |
+
+### 6.2 Adaptive Learning Engine
+
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| **Personalized Difficulty** | AI adjusts question difficulty based on pre-test scores and unit performance | 🔴 High |
+| **Smart Unit Recommendations** | Suggests which unit to revisit based on weak areas detected from assessment data | 🟡 Medium |
+| **Vocabulary Spaced Repetition** | AI schedules vocabulary review using spaced repetition algorithms (SM-2) | 🟡 Medium |
+
+### 6.3 Automated Assessment
+
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| **Auto-Grading Written Responses** | AI evaluates free-text sentence examples for grammar, relevance, and creativity | 🔴 High |
+| **Pre/Post-Test Analytics** | AI-generated insights comparing pre vs. post-test performance with per-student commentary | 🟡 Medium |
+| **Learning Progress Predictions** | ML model predicting student outcomes based on engagement patterns (XP, streak, time-on-task) | 🟢 Low |
+
+### 6.4 AI-Powered Teacher Tools
+
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| **Auto-Generated Reports** | AI summarizes individual student performance into narrative report cards | 🔴 High |
+| **Class-Wide Insights** | Dashboard with AI-detected patterns (e.g., "70% of students struggle with Unit 5 vocabulary") | 🟡 Medium |
+| **Content Generation** | AI generates new dialogue scripts, vocabulary exercises, and quiz questions per unit theme | 🟡 Medium |
+| **Observation Suggestions** | AI recommends focus areas for teacher observation based on student data | 🟢 Low |
+
+### 6.5 Implementation Approach
+
+```mermaid
+graph LR
+    A[Phase 1: Grammar & Grading] --> B[Phase 2: Adaptive Engine]
+    B --> C[Phase 3: Conversation Tutor]
+    C --> D[Phase 4: Predictive Analytics]
+```
+
+| Phase | Scope | Tech |
+|-------|-------|------|
+| **Phase 1** | Grammar correction + auto-grading written responses | OpenAI API / Gemini API |
+| **Phase 2** | Personalized difficulty + spaced repetition | Firebase ML + custom logic |
+| **Phase 3** | AI conversation tutor with speech input | Web Speech API + LLM |
+| **Phase 4** | Predictive analytics + auto-generated reports | Vertex AI / BigQuery ML |
+
+---
+
+## 7. Future Considerations
 
 - [ ] Individual student login with proper authentication
 - [ ] Offline mode with service worker caching
