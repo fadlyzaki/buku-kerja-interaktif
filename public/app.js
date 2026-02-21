@@ -1,5 +1,7 @@
-
 document.addEventListener('DOMContentLoaded', function () {
+
+    // --- AI Configuration ---
+    let geminiApiKey = localStorage.getItem('geminiApiKey') || '';
 
     // --- Data & Constants ---
     const studentList = ["ADITYA", "AMIRA", "ANISA", "ANDARA", "BUMI", "IHSAN", "KHANSA", "KOKO", "NAJWA", "NAJWA AULIA", "DEVAN", "RAFIF", "RINI", "SYA", "SYAKIRA", "HASHIFAH", "HELKA", "AFNAL", "WAWA", "PRAYATA QAISER", "ZHILAN", "ZAKI", "NAQUEEN", "TRISTAN", "NABILA"].sort();
@@ -911,7 +913,6 @@ document.addEventListener('DOMContentLoaded', function () {
         );
     }
 
-    // --- Core Functions ---
     function showToast(message, isError = false) {
         toast.textContent = message;
         toast.className = `fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transform translate-y-2 ${isError ? 'bg-red-600' : 'bg-gray-800'}`;
@@ -922,6 +923,62 @@ document.addEventListener('DOMContentLoaded', function () {
             toast.classList.add('opacity-0', 'translate-y-2');
         }
             , 3000);
+    }
+
+    /**
+     * Calls the Gemini API directly via REST.
+     * @param {string} userPrompt The main prompt from the user/app.
+     * @param {string} systemInstruction Optional system instructions to guide the model.
+     * @returns {Promise<string|null>} The AI's response text or null if failed.
+     */
+    async function callGeminiAPI(userPrompt, systemInstruction = "You are a helpful English tutor.") {
+        if (!geminiApiKey) {
+            showToast("API Key Gemini belum diatur. Silakan atur di Mode Guru. / Gemini API Key not set. Please configure in Teacher Mode.", true);
+            return null;
+        }
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
+
+        const payload = {
+            system_instruction: {
+                parts: [{ text: systemInstruction }]
+            },
+            contents: [{
+                parts: [{ text: userPrompt }]
+            }],
+            generationConfig: {
+                temperature: 0.2 // Lower temp for more deterministic grading/grammar checks
+            }
+        };
+
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error("Gemini API Error:", errorData);
+                showToast(`Gemini Error: ${response.status} ${response.statusText}`, true);
+                return null;
+            }
+
+            const data = await response.json();
+            if (data && data.candidates && data.candidates.length > 0) {
+                return data.candidates[0].content.parts[0].text;
+            } else {
+                showToast("Respons AI kosong atau tidak valid / Empty or invalid AI response", true);
+                return null;
+            }
+        } catch (error) {
+            console.error("Fetch request to Gemini failed:", error);
+            showToast("Gagal terhubung ke AI / Failed to connect to AI", true);
+            return null;
+        }
     }
 
     function renderView(viewId) {
@@ -1144,7 +1201,18 @@ document.addEventListener('DOMContentLoaded', function () {
         const vocabForm = clone.querySelector('.vocab-examples-form');
         data.vocab.forEach(word => {
             vocabList.innerHTML += `<div class="bg-gray-50 p-3 rounded-lg text-center"><div class="text-3xl">${word.icon}</div><div class="font-semibold mt-2">${word.en}</div><div class="text-sm text-gray-500">${word.id}</div></div>`;
-            vocabForm.innerHTML += `<div><label for="vocab-u${unitId}-${word.en}" class="font-semibold text-gray-700">${word.en}:</label><input type="text" id="vocab-u${unitId}-${word.en}" data-word="${word.en}" class="mt-1 w-full p-2 border border-gray-300 rounded-md" placeholder="Tulis kalimatmu... / Write your sentence..."></div>`;
+            vocabForm.innerHTML += `
+            <div class="relative">
+                <label for="vocab-u${unitId}-${word.en}" class="font-semibold text-gray-700">${word.en}:</label>
+                <div class="flex flex-col md:flex-row items-start md:items-center md:space-x-2 mt-1 gap-2 md:gap-0">
+                    <input type="text" id="vocab-u${unitId}-${word.en}" data-word="${word.en}" class="w-full md:flex-1 p-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500" placeholder="Tulis kalimatmu... / Write your sentence...">
+                    <button type="button" class="ai-check-grammar-btn w-full md:w-auto bg-purple-100 text-purple-700 border border-purple-300 px-3 py-2 rounded-md hover:bg-purple-200 transition-colors whitespace-nowrap text-sm font-semibold flex items-center justify-center space-x-1" data-input-id="vocab-u${unitId}-${word.en}">
+                        <span>✨</span>
+                        <span><span class="lang-id">Cek Grammar</span><span class="lang-en">Check</span></span>
+                    </button>
+                </div>
+                <div id="ai-feedback-vocab-u${unitId}-${word.en}" class="text-sm mt-2 hidden p-3 rounded-md bg-purple-50 text-purple-800 border border-purple-200 leading-relaxed shadow-sm"></div>
+            </div>`;
         }
         );
 
@@ -1257,6 +1325,12 @@ document.addEventListener('DOMContentLoaded', function () {
             document.body.classList.add('teacher-mode');
             document.getElementById('teacher-section').style.display = 'block';
             document.getElementById('teacher-login-container').style.display = 'none';
+
+            // Populate Gemini API Key input if it exists
+            const geminiInput = document.getElementById('gemini-api-key-input');
+            if (geminiInput && geminiApiKey) {
+                geminiInput.value = geminiApiKey;
+            }
         }
 
         appState.trackerData.forEach((data, index) => {
@@ -1305,6 +1379,108 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('nav-links').classList.toggle('hidden');
         }
         );
+
+        // AI Settings
+        const saveApiBtn = document.getElementById('save-api-key-btn');
+        if (saveApiBtn) {
+            saveApiBtn.addEventListener('click', () => {
+                const keyInput = document.getElementById('gemini-api-key-input').value.trim();
+                if (keyInput) {
+                    geminiApiKey = keyInput;
+                    localStorage.setItem('geminiApiKey', keyInput);
+                    const statusText = document.getElementById('api-key-status');
+                    statusText.classList.remove('hidden');
+                    setTimeout(() => statusText.classList.add('hidden'), 3000);
+                }
+            });
+        }
+
+        // Global Event Delegation for AI Buttons
+        document.addEventListener('click', async (e) => {
+            // 1. AI Grammar Check in Student View
+            if (e.target.closest('.ai-check-grammar-btn')) {
+                const btn = e.target.closest('.ai-check-grammar-btn');
+                const inputId = btn.dataset.inputId;
+                const inputEl = document.getElementById(inputId);
+                const feedbackEl = document.getElementById(`ai-feedback-${inputId}`);
+
+                if (!inputEl.value.trim()) {
+                    showToast("Tulis kalimat dulu! / Write a sentence first!", true);
+                    return;
+                }
+
+                btn.disabled = true;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = `<span class="animate-pulse">⏳ Mengecek...</span>`;
+                feedbackEl.classList.add('hidden');
+
+                const prompt = `Please check the English grammar of the following sentence written by a student learning English. 
+Sentence: "${inputEl.value}"
+Vocabulary word they were supposed to use: "${inputEl.dataset.word}"
+
+If the sentence is correct and uses the word properly, say: "✅ Bagus sekali!" (Add a short encouraging English comment).
+If there is a grammar error, provide the corrected sentence and briefly explain the error in Indonesian. Keep your response short and friendly.`;
+
+                const aiResponse = await callGeminiAPI(prompt, "You are a helpful, encouraging English tutor for Indonesian secondary school students.");
+
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+
+                if (aiResponse) {
+                    feedbackEl.innerHTML = aiResponse.replace(/\n/g, '<br>');
+                    feedbackEl.classList.remove('hidden');
+                }
+            }
+
+            // 2. AI Auto-Score in Teacher View
+            if (e.target.closest('.auto-score-ai-button')) {
+                const btn = e.target.closest('.auto-score-ai-button');
+                const unitPage = btn.closest('.unit-page');
+
+                // Collect sentences
+                const inputs = unitPage.querySelectorAll('.vocab-examples-form input');
+                const sentences = [];
+                inputs.forEach(i => {
+                    if (i.value.trim()) {
+                        sentences.push(`Word: ${i.dataset.word} | Sentence: ${i.value}`);
+                    }
+                });
+
+                if (sentences.length === 0) {
+                    showToast("Siswa belum mengisi kalimat / No sentences written yet", true);
+                    return;
+                }
+
+                btn.disabled = true;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = `⏳ AI Scoring...`;
+
+                const prompt = `You are grading an English vocabulary assignment for an Indonesian secondary school student. 
+They had to write ${inputs.length} sentences using specific vocabulary words. Here are their submissions:
+${sentences.join('\n')}
+
+Please evaluate their grammar, spelling, and proper use of the assigned words.
+Give a final score from 0 to 100.
+IMPORTANT: You MUST end your response exactly with the formal SCORE tag as follows: [SCORE: X] where X is the integer score.`;
+
+                const aiResponse = await callGeminiAPI(prompt, "You are a strict but fair English teacher.");
+
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+
+                if (aiResponse) {
+                    const scoreMatch = aiResponse.match(/\[SCORE:\s*(\d+)\]/i);
+                    if (scoreMatch) {
+                        const score = parseInt(scoreMatch[1], 10);
+                        const scoreInput = unitPage.querySelector('.teacher-score-input[data-section="vocabulary"]');
+                        if (scoreInput) scoreInput.value = score;
+                        showToast(`Skor AI: ${score}/100 / Scored by AI`, false);
+                    } else {
+                        showToast(`Format skor AI tidak ditemukan / AI score format not found in response`, true);
+                    }
+                }
+            }
+        });
 
         document.querySelectorAll('.nav-link').forEach(link => {
             link.addEventListener('click', (e) => {

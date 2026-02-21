@@ -1,793 +1,980 @@
 <!DOCTYPE html>
 <html lang="id">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Interactive Workbook - Bilingual</title>
-        <!-- UI Libraries -->
-        <script src="https://cdn.tailwindcss.com"></script>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Nunito:wght@400;600&display=swap" rel="stylesheet">
-        <!-- Favicon -->
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦉</text></svg>" type="image/svg+xml">
-        <!-- Firebase (v10 Modular SDK) -->
-        <script type="module">
-            // Import Firebase services
-            import {initializeApp} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-            import {getFirestore, serverTimestamp, addDoc, collection, doc, setDoc} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
-            import {getAuth, signInAnonymously, onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
-            // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-            const firebaseConfig = {
-                apiKey: "AIzaSyD8iWDWdcJuAvUJ-1432mDSYRuTeXtkiys",
-                authDomain: "buku-kerja-interaktif.firebaseapp.com",
-                projectId: "buku-kerja-interaktif",
-                storageBucket: "buku-kerja-interaktif.firebasestorage.app",
-                messagingSenderId: "1012608369145",
-                appId: "1:1012608369145:web:0b6d86f1cc41e965497d28",
-                measurementId: "G-48JLEE5KCW"
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Workbook - Bilingual</title>
+    <!-- UI Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Nunito:wght@400;600&display=swap"
+        rel="stylesheet">
+    <!-- Favicon -->
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦉</text></svg>"
+        type="image/svg+xml">
+    <!-- Firebase (v10 Modular SDK) -->
+    <script type="module">
+        // Import Firebase services
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+        import { getFirestore, serverTimestamp, addDoc, collection, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyD8iWDWdcJuAvUJ-1432mDSYRuTeXtkiys",
+            authDomain: "buku-kerja-interaktif.firebaseapp.com",
+            projectId: "buku-kerja-interaktif",
+            storageBucket: "buku-kerja-interaktif.firebasestorage.app",
+            messagingSenderId: "1012608369145",
+            appId: "1:1012608369145:web:0b6d86f1cc41e965497d28",
+            measurementId: "G-48JLEE5KCW"
+        };
+
+        // Initialize Firebase
+        try {
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            const auth = getAuth(app);
+
+            // Sign in anonymously to get a user ID for data tracking
+            signInAnonymously(auth).catch(console.error);
+
+            // Expose Firebase functions to be used by the main application script
+            window.__fb = {
+                db,
+                serverTimestamp,
+                addDoc,
+                collection,
+                auth,
+                onAuthStateChanged,
+                doc,
+                setDoc
             };
+        } catch (e) {
+            console.error("Firebase initialization error. Please check your firebaseConfig.", e);
+            document.addEventListener('DOMContentLoaded', function () {
+                const banner = document.createElement('div');
+                banner.style.cssText = 'background:#fef2f2;color:#991b1b;padding:12px 16px;text-align:center;font-family:sans-serif;font-size:14px;border-bottom:2px solid #fca5a5;';
+                banner.innerHTML = '⚠️ <strong>Koneksi database gagal.</strong> Progres belajarmu tidak akan tersimpan. / <strong>Database connection failed.</strong> Your progress will not be saved.';
+                document.body.prepend(banner);
+            });
+        }
+    </script>
+    <!-- Application Styles -->
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+        }
 
-            // Initialize Firebase
-            try {
-                const app = initializeApp(firebaseConfig);
-                const db = getFirestore(app);
-                const auth = getAuth(app);
+        h1,
+        h2,
+        h3,
+        h4,
+        b,
+        strong {
+            font-family: 'Poppins', sans-serif;
+        }
 
-                // Sign in anonymously to get a user ID for data tracking
-                signInAnonymously(auth).catch(console.error);
+        .main-content>div {
+            display: none;
+        }
 
-                // Expose Firebase functions to be used by the main application script
-                window.__fb = {
-                    db,
-                    serverTimestamp,
-                    addDoc,
-                    collection,
-                    auth,
-                    onAuthStateChanged,
-                    doc,
-                    setDoc
-                };
-            } catch (e) {
-                console.error("Firebase initialization error. Please check your firebaseConfig.", e);
-                document.addEventListener('DOMContentLoaded', function() {
-                    const banner = document.createElement('div');
-                    banner.style.cssText = 'background:#fef2f2;color:#991b1b;padding:12px 16px;text-align:center;font-family:sans-serif;font-size:14px;border-bottom:2px solid #fca5a5;';
-                    banner.innerHTML = '⚠️ <strong>Koneksi database gagal.</strong> Progres belajarmu tidak akan tersimpan. / <strong>Database connection failed.</strong> Your progress will not be saved.';
-                    document.body.prepend(banner);
-                });
-               }
-        </script>
-        <!-- Application Styles -->
-        <style>
-            body {
-                font-family: 'Nunito', sans-serif;
-            }
+        .main-content>div.active {
+            display: block;
+        }
 
-            h1, h2, h3, h4, b, strong {
-                font-family: 'Poppins', sans-serif;
-            }
+        .nav-link.active {
+            background-color: #58a700;
+            color: white;
+        }
 
-            .main-content > div {
-                display: none;
-            }
+        .star-rating span,
+        .motivation-star-rating span {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
 
-            .main-content > div.active {
-                display: block;
-            }
+        .star-rating span.active,
+        .motivation-star-rating span.active {
+            color: #facc15;
+            /* yellow-400 */
+        }
 
-            .nav-link.active {
-                background-color: #58a700;
-                color: white;
-            }
+        #toast {
+            transition: opacity 0.5s, transform 0.5s;
+        }
 
-            .star-rating span, .motivation-star-rating span {
-                cursor: pointer;
-                transition: color 0.2s;
-            }
-            
-            .star-rating span.active, .motivation-star-rating span.active {
-                color: #facc15; /* yellow-400 */
-            }
+        .dialogue-practice-area {
+            scroll-behavior: smooth;
+        }
 
-            #toast {
-                transition: opacity 0.5s, transform 0.5s;
-            }
+        .lang-en {
+            display: none;
+        }
 
-            .dialogue-practice-area {
-                scroll-behavior: smooth;
-            }
+        .lang-id {
+            display: inline;
+        }
 
-            .lang-en {
-                display: none;
-            }
+        body.en .lang-en {
+            display: inline;
+        }
 
-            .lang-id {
-                display: inline;
-            }
+        body.en .lang-id {
+            display: none;
+        }
 
-            body.en .lang-en {
-                display: inline;
-            }
+        body.en #home .lang-id {
+            display: none;
+        }
 
-            body.en .lang-id {
-                display: none;
-            }
+        body.en #home .lang-en {
+            display: block;
+        }
 
-            body.en #home .lang-id {
-                display: none;
-            }
+        .lang-switch-btn.active {
+            background-color: #78C800;
+            color: white;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
 
-            body.en #home .lang-en {
-                display: block;
-            }
+        .teacher-score-box {
+            display: none;
+        }
 
-            .lang-switch-btn.active {
-                background-color: #78C800;
-                color: white;
-                box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-            }
+        body.teacher-mode .teacher-score-box {
+            display: block;
+        }
+    </style>
+</head>
 
-            .teacher-score-box {
-                display: none;
-            }
-
-            body.teacher-mode .teacher-score-box {
-                display: block;
-            }
-        </style>
-    </head>
-    <body class="bg-gray-50 text-gray-800">
-        <div id="app" class="flex flex-col md:flex-row min-h-screen">
-            <nav class="w-full md:w-64 bg-white md:border-r border-gray-200 flex-shrink-0">
-                <div class="p-4 border-b flex items-center justify-between">
-                    <a href="#" data-target="home" class="flex items-center space-x-3 nav-link-header">
-                        <div class="text-3xl">🦉</div>
-                        <h1 class="text-lg font-bold text-gray-700">Interactive Workbook</h1>
-                    </a>
-                    <button id="menu-toggle" class="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100">
-                        <span class="text-2xl">☰</span>
-                    </button>
-                </div>
-                <div id="nav-links" class="hidden md:block">
-                    <div class="p-2">
+<body class="bg-gray-50 text-gray-800">
+    <div id="app" class="flex flex-col md:flex-row min-h-screen">
+        <nav class="w-full md:w-64 bg-white md:border-r border-gray-200 flex-shrink-0">
+            <div class="p-4 border-b flex items-center justify-between">
+                <a href="#" data-target="home" class="flex items-center space-x-3 nav-link-header">
+                    <div class="text-3xl">🦉</div>
+                    <h1 class="text-lg font-bold text-gray-700">Interactive Workbook</h1>
+                </a>
+                <button id="menu-toggle" class="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100">
+                    <span class="text-2xl">☰</span>
+                </button>
+            </div>
+            <div id="nav-links" class="hidden md:block">
+                <div class="p-2">
+                    <ul>
+                        <li>
+                            <a href="#" data-target="home"
+                                class="nav-link active flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                <span>🏠</span>
+                                <span>
+                                    <span class="lang-id">Selamat Datang</span>
+                                    <span class="lang-en">Welcome</span>
+                                </span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" data-target="pretest"
+                                class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                <span>📝</span>
+                                <span>
+                                    <span class="lang-id">Pre-Test</span>
+                                    <span class="lang-en">Pre-Test</span>
+                                </span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" data-target="posttest"
+                                class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                <span>🏁</span>
+                                <span>
+                                    <span class="lang-id">Post-Test</span>
+                                    <span class="lang-en">Post-Test</span>
+                                </span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" data-target="motivation"
+                                class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                <span>💪</span>
+                                <span>
+                                    <span class="lang-id">Tingkat Motivasi</span>
+                                    <span class="lang-en">Motivation Level</span>
+                                </span>
+                            </a>
+                        </li>
+                        <li class="mt-4 px-3 text-sm font-semibold text-gray-500 uppercase">Units</li>
+                        <li>
+                            <a href="#" data-target="unit1"
+                                class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                <span>🧠</span>
+                                <span>
+                                    Unit 1: <span class="lang-id">Orientasi</span>
+                                    <span class="lang-en">Orientation</span>
+                                </span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" data-target="unit2"
+                                class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                <span>🙋‍♀️</span>
+                                <span>
+                                    Unit 2: <span class="lang-id">Perkenalan</span>
+                                    <span class="lang-en">Introduction</span>
+                                </span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" data-target="unit3"
+                                class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                <span>☀️</span>
+                                <span>
+                                    Unit 3: <span class="lang-id">Rutinitas</span>
+                                    <span class="lang-en">Routines</span>
+                                </span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" data-target="unit4"
+                                class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                <span>🏫</span>
+                                <span>
+                                    Unit 4: <span class="lang-id">Sekolah</span>
+                                    <span class="lang-en">School</span>
+                                </span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" data-target="unit5"
+                                class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                <span>🍔</span>
+                                <span>
+                                    Unit 5: <span class="lang-id">Makanan</span>
+                                    <span class="lang-en">Food</span>
+                                </span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" data-target="unit6"
+                                class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                <span>🎮</span>
+                                <span>
+                                    Unit 6: <span class="lang-id">Hobi</span>
+                                    <span class="lang-en">Hobbies</span>
+                                </span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" data-target="unit7"
+                                class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                <span>🏛️</span>
+                                <span>
+                                    Unit 7: <span class="lang-id">Tempat</span>
+                                    <span class="lang-en">Places</span>
+                                </span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" data-target="unit8"
+                                class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                <span>👋</span>
+                                <span>
+                                    Unit 8: <span class="lang-id">Ulasan</span>
+                                    <span class="lang-en">Review</span>
+                                </span>
+                            </a>
+                        </li>
+                    </ul>
+                    <div id="teacher-section" style="display: none;">
                         <ul>
+                            <li class="mt-4 px-3 text-sm font-semibold text-gray-500 uppercase">
+                                <span class="lang-id">Tambahan</span>
+                                <span class="lang-en">Extras</span>
+                            </li>
                             <li>
-                                <a href="#" data-target="home" class="nav-link active flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
-                                    <span>🏠</span>
+                                <a href="#" data-target="tracker"
+                                    class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <span>🎯</span>
                                     <span>
-                                        <span class="lang-id">Selamat Datang</span>
-                                        <span class="lang-en">Welcome</span>
+                                        <span class="lang-id">Pelacak & Laporan</span>
+                                        <span class="lang-en">Tracker & Reports</span>
                                     </span>
                                 </a>
                             </li>
                             <li>
-                                <a href="#" data-target="pretest" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
-                                    <span>📝</span>
+                                <button id="exit-teacher-mode-btn"
+                                    class="w-full mt-2 flex items-center space-x-3 p-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors">
                                     <span>
-                                        <span class="lang-id">Pre-Test</span>
-                                        <span class="lang-en">Pre-Test</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
+                                            fill="currentColor">
+                                            <path fill-rule="evenodd"
+                                                d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z"
+                                                clip-rule="evenodd" />
+                                        </svg>
                                     </span>
-                                </a>
-                            </li>
-                             <li>
-                                <a href="#" data-target="posttest" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
-                                    <span>🏁</span>
                                     <span>
-                                        <span class="lang-id">Post-Test</span>
-                                        <span class="lang-en">Post-Test</span>
+                                        <span class="lang-id">Keluar Mode Guru</span>
+                                        <span class="lang-en">Exit Teacher Mode</span>
                                     </span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" data-target="motivation" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
-                                    <span>💪</span>
-                                    <span>
-                                        <span class="lang-id">Tingkat Motivasi</span>
-                                        <span class="lang-en">Motivation Level</span>
-                                    </span>
-                                </a>
-                            </li>
-                            <li class="mt-4 px-3 text-sm font-semibold text-gray-500 uppercase">Units</li>
-                            <li>
-                                <a href="#" data-target="unit1" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
-                                    <span>🧠</span>
-                                    <span>
-                                        Unit 1: <span class="lang-id">Orientasi</span>
-                                        <span class="lang-en">Orientation</span>
-                                    </span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" data-target="unit2" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
-                                    <span>🙋‍♀️</span>
-                                    <span>
-                                        Unit 2: <span class="lang-id">Perkenalan</span>
-                                        <span class="lang-en">Introduction</span>
-                                    </span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" data-target="unit3" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
-                                    <span>☀️</span>
-                                    <span>
-                                        Unit 3: <span class="lang-id">Rutinitas</span>
-                                        <span class="lang-en">Routines</span>
-                                    </span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" data-target="unit4" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
-                                    <span>🏫</span>
-                                    <span>
-                                        Unit 4: <span class="lang-id">Sekolah</span>
-                                        <span class="lang-en">School</span>
-                                    </span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" data-target="unit5" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
-                                    <span>🍔</span>
-                                    <span>
-                                        Unit 5: <span class="lang-id">Makanan</span>
-                                        <span class="lang-en">Food</span>
-                                    </span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" data-target="unit6" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
-                                    <span>🎮</span>
-                                    <span>
-                                        Unit 6: <span class="lang-id">Hobi</span>
-                                        <span class="lang-en">Hobbies</span>
-                                    </span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" data-target="unit7" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
-                                    <span>🏛️</span>
-                                    <span>
-                                        Unit 7: <span class="lang-id">Tempat</span>
-                                        <span class="lang-en">Places</span>
-                                    </span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" data-target="unit8" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
-                                    <span>👋</span>
-                                    <span>
-                                        Unit 8: <span class="lang-id">Ulasan</span>
-                                        <span class="lang-en">Review</span>
-                                    </span>
-                                </a>
+                                </button>
                             </li>
                         </ul>
-                        <div id="teacher-section" style="display: none;">
-                            <ul>
-                                <li class="mt-4 px-3 text-sm font-semibold text-gray-500 uppercase">
-                                    <span class="lang-id">Tambahan</span>
-                                    <span class="lang-en">Extras</span>
-                                </li>
-                                <li>
-                                    <a href="#" data-target="tracker" class="nav-link flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 transition-colors">
-                                        <span>🎯</span>
-                                        <span>
-                                            <span class="lang-id">Pelacak & Laporan</span>
-                                            <span class="lang-en">Tracker & Reports</span>
-                                        </span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <button id="exit-teacher-mode-btn" class="w-full mt-2 flex items-center space-x-3 p-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors">
-                                        <span>
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"/>
-                                            </svg>
-                                        </span>
-                                        <span>
-                                            <span class="lang-id">Keluar Mode Guru</span>
-                                            <span class="lang-en">Exit Teacher Mode</span>
-                                        </span>
-                                    </button>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div id="student-display" class="p-4 border-t text-center" style="display: none;">
-                        <span class="text-sm font-semibold text-gray-600">
-                            <span class="lang-id">Siswa</span>
-                            <span class="lang-en">Student</span>
-                            :
-                        </span>
-                        <p id="student-name-display" class="font-bold text-lg text-[#58a700]"></p>
-                        <p id="student-class-display" class="text-sm text-gray-600"></p>
-                        <button id="change-student" class="text-xs text-blue-600 hover:underline mt-1">
-                            <span class="lang-id">Ganti Nama</span>
-                            <span class="lang-en">Change Name</span>
-                        </button>
-                    </div>
-                    <div id="teacher-login-container" class="p-4 text-center border-t">
-                        <button id="teacher-mode-btn" class="text-xs text-gray-500 hover:underline">
-                            <span class="lang-id">Masuk Mode Guru</span>
-                            <span class="lang-en">Teacher Mode</span>
-                        </button>
                     </div>
                 </div>
-            </nav>
-            <main class="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
-                <div class="flex justify-center mb-6">
-                    <div class="bg-gray-200 rounded-full p-1 flex space-x-1">
-                        <button id="lang-btn-id" class="lang-switch-btn px-4 py-1 text-sm font-semibold rounded-full">Indonesia</button>
-                        <button id="lang-btn-en" class="lang-switch-btn px-4 py-1 text-sm font-semibold rounded-full">English</button>
-                    </div>
+                <div id="student-display" class="p-4 border-t text-center" style="display: none;">
+                    <span class="text-sm font-semibold text-gray-600">
+                        <span class="lang-id">Siswa</span>
+                        <span class="lang-en">Student</span>
+                        :
+                    </span>
+                    <p id="student-name-display" class="font-bold text-lg text-[#58a700]"></p>
+                    <p id="student-class-display" class="text-sm text-gray-600"></p>
+                    <button id="change-student" class="text-xs text-blue-600 hover:underline mt-1">
+                        <span class="lang-id">Ganti Nama</span>
+                        <span class="lang-en">Change Name</span>
+                    </button>
                 </div>
-                <div class="main-content">
-                    <div id="pretest">
-                        <h2 class="text-2xl md:text-3xl font-bold text-[#78C800]">📝 Pre-Test</h2>
-                        <p class="mt-2 text-gray-600">
-                            <span class="lang-id">Kerjakan soal-soal di bawah ini untuk mengukur pemahaman awalmu. Jawabanmu akan tersimpan otomatis.</span>
-                            <span class="lang-en">Complete the questions below to measure your initial understanding. Your answers will be saved automatically.</span>
-                        </p>
-                        <form id="pretest-form">
-                            <div id="pretest-questions-container" class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200 space-y-8">
+                <div id="teacher-login-container" class="p-4 text-center border-t">
+                    <button id="teacher-mode-btn" class="text-xs text-gray-500 hover:underline">
+                        <span class="lang-id">Masuk Mode Guru</span>
+                        <span class="lang-en">Teacher Mode</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <main class="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
+            <div class="flex justify-center mb-6">
+                <div class="bg-gray-200 rounded-full p-1 flex space-x-1">
+                    <button id="lang-btn-id"
+                        class="lang-switch-btn px-4 py-1 text-sm font-semibold rounded-full">Indonesia</button>
+                    <button id="lang-btn-en"
+                        class="lang-switch-btn px-4 py-1 text-sm font-semibold rounded-full">English</button>
+                </div>
+            </div>
+            <div class="main-content">
+                <div id="pretest">
+                    <h2 class="text-2xl md:text-3xl font-bold text-[#78C800]">📝 Pre-Test</h2>
+                    <p class="mt-2 text-gray-600">
+                        <span class="lang-id">Kerjakan soal-soal di bawah ini untuk mengukur pemahaman awalmu. Jawabanmu
+                            akan tersimpan otomatis.</span>
+                        <span class="lang-en">Complete the questions below to measure your initial understanding. Your
+                            answers will be saved automatically.</span>
+                    </p>
+                    <form id="pretest-form">
+                        <div id="pretest-questions-container"
+                            class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200 space-y-8">
                             <!-- Pre-test questions will be dynamically inserted here -->
-                            </div>
-                            <button type="submit" id="submit-pretest-btn" class="mt-8 w-full md:w-auto bg-[#78C800] text-white font-bold py-3 px-6 rounded-lg hover:bg-[#58a700] transition-colors flex items-center justify-center space-x-2">
-                                <span>💾</span>
-                                <span>
-                                    <span class="lang-id">Kirim Jawaban Pre-Test</span>
-                                    <span class="lang-en">Submit Pre-Test Answers</span>
-                                </span>
-                            </button>
-                        </form>
-                        <div id="pretest-complete-view" style="display: none;" class="mt-8 p-8 bg-white rounded-xl shadow-md border border-gray-200 text-center">
-                            <div class="text-6xl">🎉</div>
-                            <h3 class="text-2xl font-bold text-gray-800 mt-4">
-                                <span class="lang-id">Selamat!</span>
-                                <span class="lang-en">Congratulations!</span>
-                            </h3>
-                            <p class="mt-2 text-gray-600">
-                                <span class="lang-id">Kamu telah menyelesaikan Pre-Test. Jawabanmu telah berhasil disimpan.</span>
-                                <span class="lang-en">You have completed the Pre-Test. Your answers have been saved successfully.</span>
-                            </p>
-                            <button id="back-to-home-btn" class="mt-6 bg-[#78C800] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#58a700] transition-colors">
-                                <span class="lang-id">Kembali ke Halaman Utama</span>
-                                <span class="lang-en">Back to Home</span>
-                            </button>
                         </div>
-                    </div>
-                    <div id="posttest">
-                        <h2 class="text-2xl md:text-3xl font-bold text-[#78C800]">🏁 Post-Test</h2>
+                        <button type="submit" id="submit-pretest-btn"
+                            class="mt-8 w-full md:w-auto bg-[#78C800] text-white font-bold py-3 px-6 rounded-lg hover:bg-[#58a700] transition-colors flex items-center justify-center space-x-2">
+                            <span>💾</span>
+                            <span>
+                                <span class="lang-id">Kirim Jawaban Pre-Test</span>
+                                <span class="lang-en">Submit Pre-Test Answers</span>
+                            </span>
+                        </button>
+                    </form>
+                    <div id="pretest-complete-view" style="display: none;"
+                        class="mt-8 p-8 bg-white rounded-xl shadow-md border border-gray-200 text-center">
+                        <div class="text-6xl">🎉</div>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-4">
+                            <span class="lang-id">Selamat!</span>
+                            <span class="lang-en">Congratulations!</span>
+                        </h3>
                         <p class="mt-2 text-gray-600">
-                            <span class="lang-id">Kerjakan soal-soal di bawah ini untuk mengukur pemahaman akhirmu. Jawabanmu akan tersimpan otomatis.</span>
-                            <span class="lang-en">Complete the questions below to measure your final understanding. Your answers will be saved automatically.</span>
+                            <span class="lang-id">Kamu telah menyelesaikan Pre-Test. Jawabanmu telah berhasil
+                                disimpan.</span>
+                            <span class="lang-en">You have completed the Pre-Test. Your answers have been saved
+                                successfully.</span>
                         </p>
-                        <form id="posttest-form">
-                            <div id="posttest-questions-container" class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200 space-y-8">
+                        <button id="back-to-home-btn"
+                            class="mt-6 bg-[#78C800] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#58a700] transition-colors">
+                            <span class="lang-id">Kembali ke Halaman Utama</span>
+                            <span class="lang-en">Back to Home</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="posttest">
+                    <h2 class="text-2xl md:text-3xl font-bold text-[#78C800]">🏁 Post-Test</h2>
+                    <p class="mt-2 text-gray-600">
+                        <span class="lang-id">Kerjakan soal-soal di bawah ini untuk mengukur pemahaman akhirmu.
+                            Jawabanmu akan tersimpan otomatis.</span>
+                        <span class="lang-en">Complete the questions below to measure your final understanding. Your
+                            answers will be saved automatically.</span>
+                    </p>
+                    <form id="posttest-form">
+                        <div id="posttest-questions-container"
+                            class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200 space-y-8">
                             <!-- Post-test questions will be dynamically inserted here -->
-                            </div>
-                            <button type="submit" id="submit-posttest-btn" class="mt-8 w-full md:w-auto bg-[#78C800] text-white font-bold py-3 px-6 rounded-lg hover:bg-[#58a700] transition-colors flex items-center justify-center space-x-2">
-                                <span>💾</span>
-                                <span>
-                                    <span class="lang-id">Kirim Jawaban Post-Test</span>
-                                    <span class="lang-en">Submit Post-Test Answers</span>
-                                </span>
-                            </button>
-                        </form>
-                        <div id="posttest-complete-view" style="display: none;" class="mt-8 p-8 bg-white rounded-xl shadow-md border border-gray-200 text-center">
-                            <div class="text-6xl">🎉</div>
-                            <h3 class="text-2xl font-bold text-gray-800 mt-4">
-                                <span class="lang-id">Selamat!</span>
-                                <span class="lang-en">Congratulations!</span>
-                            </h3>
-                            <p class="mt-2 text-gray-600">
-                                <span class="lang-id">Kamu telah menyelesaikan Post-Test. Jawabanmu telah berhasil disimpan.</span>
-                                <span class="lang-en">You have completed the Post-Test. Your answers have been saved successfully.</span>
-                            </p>
-                            <button id="posttest-back-to-home-btn" class="mt-6 bg-[#78C800] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#58a700] transition-colors">
-                                <span class="lang-id">Kembali ke Halaman Utama</span>
-                                <span class="lang-en">Back to Home</span>
-                            </button>
+                        </div>
+                        <button type="submit" id="submit-posttest-btn"
+                            class="mt-8 w-full md:w-auto bg-[#78C800] text-white font-bold py-3 px-6 rounded-lg hover:bg-[#58a700] transition-colors flex items-center justify-center space-x-2">
+                            <span>💾</span>
+                            <span>
+                                <span class="lang-id">Kirim Jawaban Post-Test</span>
+                                <span class="lang-en">Submit Post-Test Answers</span>
+                            </span>
+                        </button>
+                    </form>
+                    <div id="posttest-complete-view" style="display: none;"
+                        class="mt-8 p-8 bg-white rounded-xl shadow-md border border-gray-200 text-center">
+                        <div class="text-6xl">🎉</div>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-4">
+                            <span class="lang-id">Selamat!</span>
+                            <span class="lang-en">Congratulations!</span>
+                        </h3>
+                        <p class="mt-2 text-gray-600">
+                            <span class="lang-id">Kamu telah menyelesaikan Post-Test. Jawabanmu telah berhasil
+                                disimpan.</span>
+                            <span class="lang-en">You have completed the Post-Test. Your answers have been saved
+                                successfully.</span>
+                        </p>
+                        <button id="posttest-back-to-home-btn"
+                            class="mt-6 bg-[#78C800] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#58a700] transition-colors">
+                            <span class="lang-id">Kembali ke Halaman Utama</span>
+                            <span class="lang-en">Back to Home</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="motivation">
+                    <h2 class="text-2xl md:text-3xl font-bold text-[#78C800]">
+                        💪 <span class="lang-id">Tingkat Motivasi</span>
+                        <span class="lang-en">Motivation Level</span>
+                    </h2>
+                    <p class="mt-2 text-gray-600">
+                        <span class="lang-id">Seberapa termotivasi kamu untuk belajar bahasa Inggris hari ini?</span>
+                        <span class="lang-en">How motivated do you feel to learn English today?</span>
+                    </p>
+                    <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                        <p class="mt-2 text-gray-600 text-center">
+                            <span class="lang-id">Beri peringkat motivasimu (1 = Tidak termotivasi, 5 = Sangat
+                                termotivasi).</span>
+                            <span class="lang-en">Rate your motivation (1 = Not motivated, 5 = Very motivated).</span>
+                        </p>
+                        <div class="mt-4 text-6xl text-gray-300 text-center motivation-star-rating">
+                            <span data-value="1" class="cursor-pointer hover:text-yellow-400 transition-colors">★</span>
+                            <span data-value="2" class="cursor-pointer hover:text-yellow-400 transition-colors">★</span>
+                            <span data-value="3" class="cursor-pointer hover:text-yellow-400 transition-colors">★</span>
+                            <span data-value="4" class="cursor-pointer hover:text-yellow-400 transition-colors">★</span>
+                            <span data-value="5" class="cursor-pointer hover:text-yellow-400 transition-colors">★</span>
                         </div>
                     </div>
-                    <div id="motivation">
+                    <div id="motivation-complete-view" style="display: none;"
+                        class="mt-8 p-8 bg-white rounded-xl shadow-md border border-gray-200 text-center">
+                        <div class="text-6xl">🙌</div>
+                        <h3 class="text-2xl font-bold text-gray-800 mt-4">
+                            <span class="lang-id">Terima Kasih!</span>
+                            <span class="lang-en">Thank You!</span>
+                        </h3>
+                        <p class="mt-2 text-gray-600">
+                            <span class="lang-id">Penilaian motivasimu telah berhasil disimpan.</span>
+                            <span class="lang-en">Your motivation rating has been saved successfully.</span>
+                        </p>
+                        <button id="motivation-back-to-home-btn"
+                            class="mt-6 bg-[#78C800] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#58a700] transition-colors">
+                            <span class="lang-id">Kembali ke Halaman Utama</span>
+                            <span class="lang-en">Back to Home</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="home" class="active">
+                    <div id="student-welcome" style="display: none;">
                         <h2 class="text-2xl md:text-3xl font-bold text-[#78C800]">
-                            💪 <span class="lang-id">Tingkat Motivasi</span>
-                            <span class="lang-en">Motivation Level</span>
+                            <span class="lang-id">
+                                Selamat Datang Kembali, <span id="welcome-name-id"></span>
+                                ! 👋
+                            </span>
+                            <span class="lang-en">
+                                Welcome Back, <span id="welcome-name-en"></span>
+                                ! 👋
+                            </span>
                         </h2>
                         <p class="mt-2 text-gray-600">
-                            <span class="lang-id">Seberapa termotivasi kamu untuk belajar bahasa Inggris hari ini?</span>
-                            <span class="lang-en">How motivated do you feel to learn English today?</span>
+                            <span class="lang-id">Lanjutkan petualangan belajarmu. Pilih unit dari menu untuk
+                                memulai.</span>
+                            <span class="lang-en">Continue your learning adventure. Select a unit from the menu to
+                                start.</span>
                         </p>
-                        <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
-                             <p class="mt-2 text-gray-600 text-center">
-                                <span class="lang-id">Beri peringkat motivasimu (1 = Tidak termotivasi, 5 = Sangat termotivasi).</span>
-                                <span class="lang-en">Rate your motivation (1 = Not motivated, 5 = Very motivated).</span>
-                            </p>
-                            <div class="mt-4 text-6xl text-gray-300 text-center motivation-star-rating">
-                                <span data-value="1" class="cursor-pointer hover:text-yellow-400 transition-colors">★</span>
-                                <span data-value="2" class="cursor-pointer hover:text-yellow-400 transition-colors">★</span>
-                                <span data-value="3" class="cursor-pointer hover:text-yellow-400 transition-colors">★</span>
-                                <span data-value="4" class="cursor-pointer hover:text-yellow-400 transition-colors">★</span>
-                                <span data-value="5" class="cursor-pointer hover:text-yellow-400 transition-colors">★</span>
-                            </div>
-                        </div>
-                        <div id="motivation-complete-view" style="display: none;" class="mt-8 p-8 bg-white rounded-xl shadow-md border border-gray-200 text-center">
-                            <div class="text-6xl">🙌</div>
-                            <h3 class="text-2xl font-bold text-gray-800 mt-4">
-                                <span class="lang-id">Terima Kasih!</span>
-                                <span class="lang-en">Thank You!</span>
-                            </h3>
-                            <p class="mt-2 text-gray-600">
-                                <span class="lang-id">Penilaian motivasimu telah berhasil disimpan.</span>
-                                <span class="lang-en">Your motivation rating has been saved successfully.</span>
-                            </p>
-                            <button id="motivation-back-to-home-btn" class="mt-6 bg-[#78C800] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#58a700] transition-colors">
-                                <span class="lang-id">Kembali ke Halaman Utama</span>
-                                <span class="lang-en">Back to Home</span>
-                            </button>
-                        </div>
                     </div>
-                    <div id="home" class="active">
-                        <div id="student-welcome" style="display: none;">
-                            <h2 class="text-2xl md:text-3xl font-bold text-[#78C800]">
-                                <span class="lang-id">
-                                    Selamat Datang Kembali, <span id="welcome-name-id"></span>
-                                    ! 👋
-                                </span>
-                                <span class="lang-en">
-                                    Welcome Back, <span id="welcome-name-en"></span>
-                                    ! 👋
-                                </span>
-                            </h2>
-                            <p class="mt-2 text-gray-600">
-                                <span class="lang-id">Lanjutkan petualangan belajarmu. Pilih unit dari menu untuk memulai.</span>
-                                <span class="lang-en">Continue your learning adventure. Select a unit from the menu to start.</span>
-                            </p>
-                        </div>
-                        <div id="student-setup" class="p-6 sm:p-8 bg-white rounded-xl shadow-md border border-gray-200 text-center">
-                            <h2 class="text-xl md:text-2xl font-bold text-gray-800">
-                                <span class="lang-id">Selamat Datang!</span>
-                                <span class="lang-en">Welcome!</span>
-                            </h2>
-                            <p class="mt-2 text-gray-600">
-                                <span class="lang-id">Untuk memulai dan menyimpan progres, silakan masukkan nama dan kelasmu.</span>
-                                <span class="lang-en">To begin and save your progress, please enter your name and class.</span>
-                            </p>
-                            <form id="student-form" class="mt-6 flex flex-col items-center">
-                                <select id="student-name-input" class="w-full max-w-sm p-3 border border-gray-300 rounded-md text-center bg-white" required>
+                    <div id="student-setup"
+                        class="p-6 sm:p-8 bg-white rounded-xl shadow-md border border-gray-200 text-center">
+                        <h2 class="text-xl md:text-2xl font-bold text-gray-800">
+                            <span class="lang-id">Selamat Datang!</span>
+                            <span class="lang-en">Welcome!</span>
+                        </h2>
+                        <p class="mt-2 text-gray-600">
+                            <span class="lang-id">Untuk memulai dan menyimpan progres, silakan masukkan nama dan
+                                kelasmu.</span>
+                            <span class="lang-en">To begin and save your progress, please enter your name and
+                                class.</span>
+                        </p>
+                        <form id="student-form" class="mt-6 flex flex-col items-center">
+                            <select id="student-name-input"
+                                class="w-full max-w-sm p-3 border border-gray-300 rounded-md text-center bg-white"
+                                required>
                                 <!-- Student options generated by JS -->
-                                </select>
-                                <select id="student-class-input" class="w-full max-w-sm p-3 mt-4 border border-gray-300 rounded-md text-center bg-white" required>
+                            </select>
+                            <select id="student-class-input"
+                                class="w-full max-w-sm p-3 mt-4 border border-gray-300 rounded-md text-center bg-white"
+                                required>
                                 <!-- Class options generated by JS -->
-                                </select>
-                                <button type="submit" class="mt-4 w-full max-w-sm bg-[#78C800] text-white font-bold py-3 px-6 rounded-lg hover:bg-[#58a700] transition-colors">
-                                    <span class="lang-id">Mulai Belajar</span>
-                                    <span class="lang-en">Start Learning</span>
-                                </button>
-                            </form>
-                        </div>
-                        <div class="mt-8 md:hidden">
-                            <h3 class="text-xl font-bold text-gray-700 mb-4 text-center">
+                            </select>
+                            <button type="submit"
+                                class="mt-4 w-full max-w-sm bg-[#78C800] text-white font-bold py-3 px-6 rounded-lg hover:bg-[#58a700] transition-colors">
                                 <span class="lang-id">Mulai Belajar</span>
                                 <span class="lang-en">Start Learning</span>
-                            </h3>
-                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4" id="mobile-unit-nav">
+                            </button>
+                        </form>
+                    </div>
+                    <div class="mt-8 md:hidden">
+                        <h3 class="text-xl font-bold text-gray-700 mb-4 text-center">
+                            <span class="lang-id">Mulai Belajar</span>
+                            <span class="lang-en">Start Learning</span>
+                        </h3>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4" id="mobile-unit-nav">
                             <!-- Unit cards generated by JS -->
+                        </div>
+                    </div>
+                    <div
+                        class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col items-center text-center">
+                        <img src="geera-logo.jpg" alt="Geera Logo" class="h-24 mb-4"
+                            onerror="this.src='https://placehold.co/200x100/e0e0e0/78C800?text=Geera+Logo'; this.onerror=null;">
+                        <h3 class="text-xl md:text-2xl font-bold text-gray-700">
+                            <span class="lang-id">Kata Pengantar</span>
+                            <span class="lang-en">Preface</span>
+                        </h3>
+                        <p class="mt-4 text-gray-600 leading-relaxed max-w-2xl">
+                            <span class="lang-id">Selamat datang, petualang bahasa! 🥳 Ini bukan sekadar buku kerja—ini
+                                adalah paspor Anda untuk membuka dunia percakapan bahasa Inggris dengan percaya diri.
+                                Lupakan hafalan yang membosankan! Di sini, kita akan memulai perjalanan seru 🚀 melalui
+                                musik, permainan, dan tantangan nyata. Setiap unit adalah satu langkah lebih dekat dalam
+                                peta petualanganmu 🗺️. Mari mulai dan jadilah bintang percakapan! ✨</span>
+                            <span class="lang-en">Welcome, language adventurer! 🥳 This isn't just another workbook—it's
+                                your passport to unlocking a world of confident English conversation. Forget boring
+                                memorization! Here, we'll embark on a fun journey 🚀 through music, games, and
+                                real-world challenges. Every unit is a step closer on your adventure map 🗺️. Let's
+                                begin and become a conversation star! ✨</span>
+                        </p>
+                    </div>
+                    <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                        <h3 class="text-xl md:text-2xl font-bold text-gray-700">
+                            <span class="lang-id">Cara Menggunakan Buku Ini</span>
+                            <span class="lang-en">How to Use This Book</span>
+                        </h3>
+                        <p class="mt-2 text-gray-600">
+                            <span class="lang-id">Ikuti langkah-langkah seru ini di setiap unit untuk menjadi bintang
+                                percakapan!</span>
+                            <span class="lang-en">Follow these fun steps in each unit to become a conversation
+                                star!</span>
+                        </p>
+                        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-bold text-lg">🎵 Sing Along</h4>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    <span class="lang-id">Mulai pelajaran dengan lagu.</span>
+                                    <span class="lang-en">Start the lesson with a song.</span>
+                                </p>
                             </div>
-                        </div>
-                        <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col items-center text-center">
-                            <img src="geera-logo.jpg" alt="Geera Logo" class="h-24 mb-4" onerror="this.src='https://placehold.co/200x100/e0e0e0/78C800?text=Geera+Logo'; this.onerror=null;">
-                            <h3 class="text-xl md:text-2xl font-bold text-gray-700">
-                                <span class="lang-id">Kata Pengantar</span>
-                                <span class="lang-en">Preface</span>
-                            </h3>
-                            <p class="mt-4 text-gray-600 leading-relaxed max-w-2xl">
-                                <span class="lang-id">Selamat datang, petualang bahasa! 🥳 Ini bukan sekadar buku kerja—ini adalah paspor Anda untuk membuka dunia percakapan bahasa Inggris dengan percaya diri. Lupakan hafalan yang membosankan! Di sini, kita akan memulai perjalanan seru 🚀 melalui musik, permainan, dan tantangan nyata. Setiap unit adalah satu langkah lebih dekat dalam peta petualanganmu 🗺️. Mari mulai dan jadilah bintang percakapan! ✨</span>
-                                <span class="lang-en">Welcome, language adventurer! 🥳 This isn't just another workbook—it's your passport to unlocking a world of confident English conversation. Forget boring memorization! Here, we'll embark on a fun journey 🚀 through music, games, and real-world challenges. Every unit is a step closer on your adventure map 🗺️. Let's begin and become a conversation star! ✨</span>
-                            </p>
-                        </div>
-                        <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
-                           <h3 class="text-xl md:text-2xl font-bold text-gray-700">
-                                <span class="lang-id">Cara Menggunakan Buku Ini</span>
-                                <span class="lang-en">How to Use This Book</span>
-                            </h3>
-                            <p class="mt-2 text-gray-600">
-                                <span class="lang-id">Ikuti langkah-langkah seru ini di setiap unit untuk menjadi bintang percakapan!</span>
-                                <span class="lang-en">Follow these fun steps in each unit to become a conversation star!</span>
-                            </p>
-                            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                <div class="bg-gray-50 p-4 rounded-lg">
-                                    <h4 class="font-bold text-lg">🎵 Sing Along</h4>
-                                    <p class="text-sm text-gray-600 mt-1">
-                                        <span class="lang-id">Mulai pelajaran dengan lagu.</span>
-                                        <span class="lang-en">Start the lesson with a song.</span>
-                                    </p>
-                                </div>
-                                <div class="bg-gray-50 p-4 rounded-lg">
-                                    <h4 class="font-bold text-lg">📚 Learn New Words</h4>
-                                    <p class="text-sm text-gray-600 mt-1">
-                                        <span class="lang-id">Pelajari kosakata baru.</span>
-                                        <span class="lang-en">Learn new vocabulary.</span>
-                                    </p>
-                                </div>
-                                <div class="bg-gray-50 p-4 rounded-lg">
-                                    <h4 class="font-bold text-lg">💬 Practice Dialogue</h4>
-                                    <p class="text-sm text-gray-600 mt-1">
-                                        <span class="lang-id">Latih percakapan dengan teman.</span>
-                                        <span class="lang-en">Practice dialogue with a friend.</span>
-                                    </p>
-                                </div>
-                                <div class="bg-gray-50 p-4 rounded-lg">
-                                    <h4 class="font-bold text-lg">🗣️ Speaking Tasks</h4>
-                                    <p class="text-sm text-gray-600 mt-1">
-                                        <span class="lang-id">Bermain peran dalam konteks nyata.</span>
-                                        <span class="lang-en">Role-play in real contexts.</span>
-                                    </p>
-                                </div>
-                                <div class="bg-gray-50 p-4 rounded-lg">
-                                    <h4 class="font-bold text-lg">📱 Duolingo Play</h4>
-                                    <p class="text-sm text-gray-600 mt-1">
-                                        <span class="lang-id">Gunakan aplikasi untuk latihan tambahan.</span>
-                                        <span class="lang-en">Use the app for extra practice.</span>
-                                    </p>
-                                </div>
-                                <div class="bg-gray-50 p-4 rounded-lg">
-                                    <h4 class="font-bold text-lg">⭐ Collect Rewards</h4>
-                                    <p class="text-sm text-gray-600 mt-1">
-                                        <span class="lang-id">Kumpulkan bintang dan sertifikat.</span>
-                                        <span class="lang-en">Collect stars and a certificate.</span>
-                                    </p>
-                                </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-bold text-lg">📚 Learn New Words</h4>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    <span class="lang-id">Pelajari kosakata baru.</span>
+                                    <span class="lang-en">Learn new vocabulary.</span>
+                                </p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-bold text-lg">💬 Practice Dialogue</h4>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    <span class="lang-id">Latih percakapan dengan teman.</span>
+                                    <span class="lang-en">Practice dialogue with a friend.</span>
+                                </p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-bold text-lg">🗣️ Speaking Tasks</h4>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    <span class="lang-id">Bermain peran dalam konteks nyata.</span>
+                                    <span class="lang-en">Role-play in real contexts.</span>
+                                </p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-bold text-lg">📱 Duolingo Play</h4>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    <span class="lang-id">Gunakan aplikasi untuk latihan tambahan.</span>
+                                    <span class="lang-en">Use the app for extra practice.</span>
+                                </p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-bold text-lg">⭐ Collect Rewards</h4>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    <span class="lang-id">Kumpulkan bintang dan sertifikat.</span>
+                                    <span class="lang-en">Collect stars and a certificate.</span>
+                                </p>
                             </div>
                         </div>
                     </div>
-                    <!-- This is a template for units. It will be cloned and populated by JavaScript -->
-                    <div id="unit-template" data-unit-number="0" class="unit-page" style="display: none;">
-                        <h2 class="text-2xl md:text-3xl font-bold text-[#78C800] unit-title"></h2>
-                        <p class="mt-2 text-gray-600 unit-description"></p>
-                        <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
-                            <h3 class="text-xl md:text-2xl font-bold text-gray-700">🎵 Sing Along</h3>
-                            <p class="mt-2 text-gray-600">
-                                <span class="lang-id">Dengarkan lagu dan selesaikan tugas di bawah ini.</span>
-                                <span class="lang-en">Listen to the song and complete the tasks below.</span>
-                            </p>
-                            <div class="mt-4 space-y-3 sing-along-tasks"></div>
-                        </div>
-                        <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
-                            <h3 class="text-xl md:text-2xl font-bold text-gray-700">
-                                📚 <span class="lang-id">Kosakata Baru</span>
-                                <span class="lang-en">New Vocabulary</span>
-                            </h3>
-                            <p class="mt-2 text-gray-600">
-                                <span class="lang-id">Buat contoh kalimat menggunakan kata-kata di bawah ini.</span>
-                                <span class="lang-en">Create example sentences using the words below.</span>
-                            </p>
-                            <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 vocab-list"></div>
-                            <div class="mt-4 pt-4 border-t space-y-4 vocab-examples-form"></div>
-                            <button class="save-section-button mt-4 bg-gray-200 text-gray-700 text-sm font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors flex items-center space-x-2" data-section="vocabulary">
-                                <span>💾</span>
-                                <span>
-                                    <span class="lang-id">Simpan Contoh</span>
-                                    <span class="lang-en">Save Examples</span>
-                                </span>
-                            </button>
-                            <div class="teacher-score-box mt-4 pt-4 border-t border-dashed">
-                                <h4 class="font-semibold text-sm text-gray-600">
-                                    <span class="lang-id">Skor Guru</span>
-                                    <span class="lang-en">Teacher's Score</span>
-                                </h4>
-                                <div class="flex items-center space-x-2 mt-1">
-                                    <input type="number" class="teacher-score-input w-24 p-1 border rounded" placeholder=".../100" data-section="vocabulary">
-                                    <button class="save-teacher-score-button bg-blue-500 text-white text-xs px-3 py-1 rounded hover:bg-blue-600">
-                                        <span class="lang-id">Simpan Skor</span>
-                                        <span class="lang-en">Save Score</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
-                            <h3 class="text-xl md:text-2xl font-bold text-gray-700">
-                                💬 <span class="lang-id">Contoh Dialog</span>
-                                <span class="lang-en">Dialogue Example</span>
-                            </h3>
-                            <p class="mt-2 text-gray-600">
-                                <span class="lang-id">Baca dan pahami contoh percakapan berikut.</span>
-                                <span class="lang-en">Read and understand the following example conversation.</span>
-                            </p>
-                            <div class="mt-4 space-y-4 dialogue-practice-area border bg-gray-50 rounded-lg p-4 h-96 overflow-y-auto flex flex-col"></div>
-                            <div class="teacher-score-box mt-4 pt-4 border-t border-dashed">
-                                <h4 class="font-semibold text-sm text-gray-600">
-                                    <span class="lang-id">Skor Guru</span>
-                                    <span class="lang-en">Teacher's Score</span>
-                                </h4>
-                                <div class="flex items-center space-x-2 mt-1">
-                                    <input type="number" class="teacher-score-input w-24 p-1 border rounded" placeholder=".../100" data-section="dialogue">
-                                    <button class="save-teacher-score-button bg-blue-500 text-white text-xs px-3 py-1 rounded hover:bg-blue-600">
-                                        <span class="lang-id">Simpan Skor</span>
-                                        <span class="lang-en">Save Score</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
-                            <h3 class="text-xl md:text-2xl font-bold text-gray-700">
-                                🤝 <span class="lang-id">Latihan Berbicara</span>
-                                <span class="lang-en">Speaking Practice</span>
-                            </h3>
-                            <p class="mt-2 text-gray-600">
-                                <span class="lang-id">Tanyakan pada temanmu dan catat jawabannya di bawah ini!</span>
-                                <span class="lang-en">Ask your friend and write down their answers below!</span>
-                            </p>
-                            <div class="mt-4 space-y-4 peer-interview"></div>
-                            <button class="save-section-button mt-4 bg-gray-200 text-gray-700 text-sm font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors flex items-center space-x-2" data-section="interview">
-                                <span>💾</span>
-                                <span>
-                                    <span class="lang-id">Simpan Jawaban</span>
-                                    <span class="lang-en">Save Answers</span>
-                                </span>
-                            </button>
-                            <div class="teacher-score-box mt-4 pt-4 border-t border-dashed">
-                                <h4 class="font-semibold text-sm text-gray-600">
-                                    <span class="lang-id">Skor Guru</span>
-                                    <span class="lang-en">Teacher's Score</span>
-                                </h4>
-                                <div class="flex items-center space-x-2 mt-1">
-                                    <input type="number" class="teacher-score-input w-24 p-1 border rounded" placeholder=".../100" data-section="interview">
-                                    <button class="save-teacher-score-button bg-blue-500 text-white text-xs px-3 py-1 rounded hover:bg-blue-600">
-                                        <span class="lang-id">Simpan Skor</span>
-                                        <span class="lang-en">Save Score</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
-                            <h3 class="text-xl md:text-2xl font-bold text-gray-700">📱 Duolingo Play</h3>
-                            <p class="mt-2 text-gray-600">
-                                <span class="lang-id">Buka aplikasi Duolingo dan selesaikan tantangan ini.</span>
-                                <span class="lang-en">Open the Duolingo app and complete these challenges.</span>
-                            </p>
-                            <div class="mt-4 space-y-3 duolingo-play-tasks"></div>
-                            <div class="mt-4 pt-4 border-t">
-                                <h4 class="font-semibold text-gray-700">
-                                    <span class="lang-id">Lacak Kemajuanmu</span>
-                                    <span class="lang-en">Track Your Progress</span>
-                                </h4>
-                                <div class="grid grid-cols-2 gap-4 mt-2">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-600">
-                                            <span class="lang-id">XP Didapat</span>
-                                            <span class="lang-en">XP Earned</span>
-                                        </label>
-                                        <input type="number" class="duolingo-xp-input mt-1 w-full p-2 border rounded-md" placeholder="e.g., 50">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-600">
-                                            <span class="lang-id">Streak Saat Ini</span>
-                                            <span class="lang-en">Current Streak</span>
-                                            🔥
-                                        </label>
-                                        <input type="number" class="duolingo-streak-input mt-1 w-full p-2 border rounded-md" placeholder="e.g., 14">
-                                    </div>
-                                </div>
-                                <button class="save-section-button mt-4 bg-gray-200 text-gray-700 text-sm font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors flex items-center space-x-2" data-section="duolingoPlay">
-                                    <span>💾</span>
-                                    <span>
-                                        <span class="lang-id">Simpan Progres</span>
-                                        <span class="lang-en">Save Progress</span>
-                                    </span>
+                </div>
+                <!-- This is a template for units. It will be cloned and populated by JavaScript -->
+                <div id="unit-template" data-unit-number="0" class="unit-page" style="display: none;">
+                    <h2 class="text-2xl md:text-3xl font-bold text-[#78C800] unit-title"></h2>
+                    <p class="mt-2 text-gray-600 unit-description"></p>
+                    <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                        <h3 class="text-xl md:text-2xl font-bold text-gray-700">🎵 Sing Along</h3>
+                        <p class="mt-2 text-gray-600">
+                            <span class="lang-id">Dengarkan lagu dan selesaikan tugas di bawah ini.</span>
+                            <span class="lang-en">Listen to the song and complete the tasks below.</span>
+                        </p>
+                        <div class="mt-4 space-y-3 sing-along-tasks"></div>
+                    </div>
+                    <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                        <h3 class="text-xl md:text-2xl font-bold text-gray-700">
+                            📚 <span class="lang-id">Kosakata Baru</span>
+                            <span class="lang-en">New Vocabulary</span>
+                        </h3>
+                        <p class="mt-2 text-gray-600">
+                            <span class="lang-id">Buat contoh kalimat menggunakan kata-kata di bawah ini.</span>
+                            <span class="lang-en">Create example sentences using the words below.</span>
+                        </p>
+                        <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 vocab-list"></div>
+                        <div class="mt-4 pt-4 border-t space-y-4 vocab-examples-form"></div>
+                        <button
+                            class="save-section-button mt-4 bg-gray-200 text-gray-700 text-sm font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors flex items-center space-x-2"
+                            data-section="vocabulary">
+                            <span>💾</span>
+                            <span>
+                                <span class="lang-id">Simpan Contoh</span>
+                                <span class="lang-en">Save Examples</span>
+                            </span>
+                        </button>
+                        <div class="teacher-score-box mt-4 pt-4 border-t border-dashed">
+                            <h4 class="font-semibold text-sm text-gray-600">
+                                <span class="lang-id">Skor Guru</span>
+                                <span class="lang-en">Teacher's Score</span>
+                            </h4>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <input type="number" class="teacher-score-input w-24 p-1 border rounded"
+                                    placeholder=".../100" data-section="vocabulary">
+                                <button
+                                    class="save-teacher-score-button bg-blue-500 text-white text-xs px-3 py-1 rounded hover:bg-blue-600">
+                                    <span class="lang-id">Simpan Skor</span>
+                                    <span class="lang-en">Save Score</span>
+                                </button>
+                                <button
+                                    class="auto-score-ai-button bg-purple-100 text-purple-700 border border-purple-300 text-xs px-3 py-1 rounded hover:bg-purple-200 transition-colors hidden"
+                                    data-section="vocabulary">
+                                    ✨ Auto-score AI
                                 </button>
                             </div>
                         </div>
-                        <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
-                            <h3 class="text-xl md:text-2xl font-bold text-gray-700">
-                                ⭐ <span class="lang-id">Refleksi Diri</span>
-                                <span class="lang-en">Self Reflection</span>
-                            </h3>
-                            <p class="mt-2 text-gray-600">
-                                <span class="lang-id">Seberapa percaya diri kamu setelah pelajaran ini? Beri peringkat dirimu!</span>
-                                <span class="lang-en">How confident do you feel after this lesson? Rate yourself!</span>
-                            </p>
-                            <div class="mt-4 text-4xl text-gray-300 star-rating">
-                                <span data-value="1">★</span>
-                                <span data-value="2">★</span>
-                                <span data-value="3">★</span>
-                                <span data-value="4">★</span>
-                                <span data-value="5">★</span>
+                    </div>
+                    <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                        <h3 class="text-xl md:text-2xl font-bold text-gray-700">
+                            💬 <span class="lang-id">Contoh Dialog</span>
+                            <span class="lang-en">Dialogue Example</span>
+                        </h3>
+                        <p class="mt-2 text-gray-600">
+                            <span class="lang-id">Baca dan pahami contoh percakapan berikut.</span>
+                            <span class="lang-en">Read and understand the following example conversation.</span>
+                        </p>
+                        <div
+                            class="mt-4 space-y-4 dialogue-practice-area border bg-gray-50 rounded-lg p-4 h-96 overflow-y-auto flex flex-col">
+                        </div>
+                        <div class="teacher-score-box mt-4 pt-4 border-t border-dashed">
+                            <h4 class="font-semibold text-sm text-gray-600">
+                                <span class="lang-id">Skor Guru</span>
+                                <span class="lang-en">Teacher's Score</span>
+                            </h4>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <input type="number" class="teacher-score-input w-24 p-1 border rounded"
+                                    placeholder=".../100" data-section="dialogue">
+                                <button
+                                    class="save-teacher-score-button bg-blue-500 text-white text-xs px-3 py-1 rounded hover:bg-blue-600">
+                                    <span class="lang-id">Simpan Skor</span>
+                                    <span class="lang-en">Save Score</span>
+                                </button>
                             </div>
                         </div>
                     </div>
-                    <div id="unit1"></div>
-                    <div id="unit2"></div>
-                    <div id="unit3"></div>
-                    <div id="unit4"></div>
-                    <div id="unit5"></div>
-                    <div id="unit6"></div>
-                    <div id="unit7"></div>
-                    <div id="unit8"></div>
-                    <div id="tracker">
-                        <div id="student-tracker-view">
-                            <h2 class="text-2xl md:text-3xl font-bold text-[#78C800]">
-                                🎯 <span class="lang-id">Pelacak Kemajuan</span>
-                                <span class="lang-en">Progress Tracker</span>
-                            </h2>
-                            <p class="mt-2 text-gray-600">
-                                <span class="lang-id">Catat progres belajarmu di Duolingo setiap sesi.</span>
-                                <span class="lang-en">Record your Duolingo progress every session.</span>
-                            </p>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
-                                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-center">
-                                    <h3 class="text-sm font-semibold text-gray-500 uppercase">
-                                        <span class="lang-id">Total XP Didapat</span>
-                                        <span class="lang-en">Total XP Earned</span>
-                                    </h3>
-                                    <p id="total-xp-display" class="text-3xl font-bold text-[#78C800] mt-1">0</p>
+                    <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                        <h3 class="text-xl md:text-2xl font-bold text-gray-700">
+                            🤝 <span class="lang-id">Latihan Berbicara</span>
+                            <span class="lang-en">Speaking Practice</span>
+                        </h3>
+                        <p class="mt-2 text-gray-600">
+                            <span class="lang-id">Tanyakan pada temanmu dan catat jawabannya di bawah ini!</span>
+                            <span class="lang-en">Ask your friend and write down their answers below!</span>
+                        </p>
+                        <div class="mt-4 space-y-4 peer-interview"></div>
+                        <button
+                            class="save-section-button mt-4 bg-gray-200 text-gray-700 text-sm font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors flex items-center space-x-2"
+                            data-section="interview">
+                            <span>💾</span>
+                            <span>
+                                <span class="lang-id">Simpan Jawaban</span>
+                                <span class="lang-en">Save Answers</span>
+                            </span>
+                        </button>
+                        <div class="teacher-score-box mt-4 pt-4 border-t border-dashed">
+                            <h4 class="font-semibold text-sm text-gray-600">
+                                <span class="lang-id">Skor Guru</span>
+                                <span class="lang-en">Teacher's Score</span>
+                            </h4>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <input type="number" class="teacher-score-input w-24 p-1 border rounded"
+                                    placeholder=".../100" data-section="interview">
+                                <button
+                                    class="save-teacher-score-button bg-blue-500 text-white text-xs px-3 py-1 rounded hover:bg-blue-600">
+                                    <span class="lang-id">Simpan Skor</span>
+                                    <span class="lang-en">Save Score</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                        <h3 class="text-xl md:text-2xl font-bold text-gray-700">📱 Duolingo Play</h3>
+                        <p class="mt-2 text-gray-600">
+                            <span class="lang-id">Buka aplikasi Duolingo dan selesaikan tantangan ini.</span>
+                            <span class="lang-en">Open the Duolingo app and complete these challenges.</span>
+                        </p>
+                        <div class="mt-4 space-y-3 duolingo-play-tasks"></div>
+                        <div class="mt-4 pt-4 border-t">
+                            <h4 class="font-semibold text-gray-700">
+                                <span class="lang-id">Lacak Kemajuanmu</span>
+                                <span class="lang-en">Track Your Progress</span>
+                            </h4>
+                            <div class="grid grid-cols-2 gap-4 mt-2">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-600">
+                                        <span class="lang-id">XP Didapat</span>
+                                        <span class="lang-en">XP Earned</span>
+                                    </label>
+                                    <input type="number" class="duolingo-xp-input mt-1 w-full p-2 border rounded-md"
+                                        placeholder="e.g., 50">
                                 </div>
-                                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-center">
-                                    <h3 class="text-sm font-semibold text-gray-500 uppercase">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-600">
                                         <span class="lang-id">Streak Saat Ini</span>
                                         <span class="lang-en">Current Streak</span>
-                                    </h3>
-                                    <p id="current-streak-display" class="text-3xl font-bold text-[#78C800] mt-1">0 🔥</p>
+                                        🔥
+                                    </label>
+                                    <input type="number" class="duolingo-streak-input mt-1 w-full p-2 border rounded-md"
+                                        placeholder="e.g., 14">
                                 </div>
                             </div>
-                            <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                <div class="p-6 bg-white rounded-xl shadow-sm border border-gray-200">
-                                    <h3 class="text-xl md:text-2xl font-bold text-gray-700">
-                                        <span class="lang-id">Tabel Progres</span>
-                                        <span class="lang-en">Progress Table</span>
-                                    </h3>
-                                    <div class="mt-4 overflow-x-auto">
-                                        <table class="w-full text-left" id="tracker-table">
-                                            <thead class="bg-gray-50">
-                                                <tr>
-                                                    <th class="p-3 font-semibold">
-                                                        <span class="lang-id">Sesi</span>
-                                                        <span class="lang-en">Session</span>
-                                                    </th>
-                                                    <th class="p-3 font-semibold">
-                                                        <span class="lang-id">XP Didapat</span>
-                                                        <span class="lang-en">XP Earned</span>
-                                                    </th>
-                                                    <th class="p-3 font-semibold">Streak 🔥</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody></tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                                <div class="p-6 bg-white rounded-xl shadow-sm border border-gray-200">
-                                    <h3 class="text-xl md:text-2xl font-bold text-gray-700">
-                                        <span class="lang-id">Visualisasi XP</span>
-                                        <span class="lang-en">XP Visualization</span>
-                                    </h3>
-                                    <div class="mt-4 chart-container relative h-80 w-full max-w-lg mx-auto">
-                                        <canvas id="progressChart"></canvas>
-                                    </div>
-                                </div>
+                            <button
+                                class="save-section-button mt-4 bg-gray-200 text-gray-700 text-sm font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors flex items-center space-x-2"
+                                data-section="duolingoPlay">
+                                <span>💾</span>
+                                <span>
+                                    <span class="lang-id">Simpan Progres</span>
+                                    <span class="lang-en">Save Progress</span>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                        <h3 class="text-xl md:text-2xl font-bold text-gray-700">
+                            ⭐ <span class="lang-id">Refleksi Diri</span>
+                            <span class="lang-en">Self Reflection</span>
+                        </h3>
+                        <p class="mt-2 text-gray-600">
+                            <span class="lang-id">Seberapa percaya diri kamu setelah pelajaran ini? Beri peringkat
+                                dirimu!</span>
+                            <span class="lang-en">How confident do you feel after this lesson? Rate yourself!</span>
+                        </p>
+                        <div class="mt-4 text-4xl text-gray-300 star-rating">
+                            <span data-value="1">★</span>
+                            <span data-value="2">★</span>
+                            <span data-value="3">★</span>
+                            <span data-value="4">★</span>
+                            <span data-value="5">★</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="unit1"></div>
+                <div id="unit2"></div>
+                <div id="unit3"></div>
+                <div id="unit4"></div>
+                <div id="unit5"></div>
+                <div id="unit6"></div>
+                <div id="unit7"></div>
+                <div id="unit8"></div>
+                <div id="tracker">
+                    <div id="student-tracker-view">
+                        <h2 class="text-2xl md:text-3xl font-bold text-[#78C800]">
+                            🎯 <span class="lang-id">Pelacak Kemajuan</span>
+                            <span class="lang-en">Progress Tracker</span>
+                        </h2>
+                        <p class="mt-2 text-gray-600">
+                            <span class="lang-id">Catat progres belajarmu di Duolingo setiap sesi.</span>
+                            <span class="lang-en">Record your Duolingo progress every session.</span>
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-center">
+                                <h3 class="text-sm font-semibold text-gray-500 uppercase">
+                                    <span class="lang-id">Total XP Didapat</span>
+                                    <span class="lang-en">Total XP Earned</span>
+                                </h3>
+                                <p id="total-xp-display" class="text-3xl font-bold text-[#78C800] mt-1">0</p>
                             </div>
-                            <div class="mt-8">
-                                <button id="save-tracker-button" class="w-full md:w-auto bg-[#78C800] text-white font-bold py-3 px-6 rounded-lg hover:bg-[#58a700] transition-colors flex items-center justify-center space-x-2">
-                                    <span>💾</span>
-                                    <span>
-                                        <span class="lang-id">Simpan Progres</span>
-                                        <span class="lang-en">Save Progress</span>
-                                    </span>
-                                </button>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-center">
+                                <h3 class="text-sm font-semibold text-gray-500 uppercase">
+                                    <span class="lang-id">Streak Saat Ini</span>
+                                    <span class="lang-en">Current Streak</span>
+                                </h3>
+                                <p id="current-streak-display" class="text-3xl font-bold text-[#78C800] mt-1">0 🔥</p>
                             </div>
                         </div>
-                        <div id="teacher-tracker-view" style="display: none;">
-                            <h2 class="text-2xl md:text-3xl font-bold text-[#78C800]">
-                                📋 <span class="lang-id">Laporan & Penilaian Manual</span>
-                                <span class="lang-en">Manual Report & Grading</span>
-                            </h2>
-                            <p class="mt-2 text-gray-600">
-                                <span class="lang-id">Tambah entri untuk mencatat progres dan nilai siswa. Data disimpan langsung ke Firestore.</span>
-                                <span class="lang-en">Add entries to record student progress and grades. Data is saved directly to Firestore.</span>
+                        <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div class="p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                                <h3 class="text-xl md:text-2xl font-bold text-gray-700">
+                                    <span class="lang-id">Tabel Progres</span>
+                                    <span class="lang-en">Progress Table</span>
+                                </h3>
+                                <div class="mt-4 overflow-x-auto">
+                                    <table class="w-full text-left" id="tracker-table">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="p-3 font-semibold">
+                                                    <span class="lang-id">Sesi</span>
+                                                    <span class="lang-en">Session</span>
+                                                </th>
+                                                <th class="p-3 font-semibold">
+                                                    <span class="lang-id">XP Didapat</span>
+                                                    <span class="lang-en">XP Earned</span>
+                                                </th>
+                                                <th class="p-3 font-semibold">Streak 🔥</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="p-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                                <h3 class="text-xl md:text-2xl font-bold text-gray-700">
+                                    <span class="lang-id">Visualisasi XP</span>
+                                    <span class="lang-en">XP Visualization</span>
+                                </h3>
+                                <div class="mt-4 chart-container relative h-80 w-full max-w-lg mx-auto">
+                                    <canvas id="progressChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-8">
+                            <button id="save-tracker-button"
+                                class="w-full md:w-auto bg-[#78C800] text-white font-bold py-3 px-6 rounded-lg hover:bg-[#58a700] transition-colors flex items-center justify-center space-x-2">
+                                <span>💾</span>
+                                <span>
+                                    <span class="lang-id">Simpan Progres</span>
+                                    <span class="lang-en">Save Progress</span>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="teacher-tracker-view" style="display: none;">
+                        <h2 class="text-2xl md:text-3xl font-bold text-[#78C800]">
+                            📋 <span class="lang-id">Laporan & Penilaian Manual</span>
+                            <span class="lang-en">Manual Report & Grading</span>
+                        </h2>
+                        <p class="mt-2 text-gray-600">
+                            <span class="lang-id">Tambah entri untuk mencatat progres dan nilai siswa. Data disimpan
+                                langsung ke Firestore.</span>
+                            <span class="lang-en">Add entries to record student progress and grades. Data is saved
+                                directly to Firestore.</span>
+                        </p>
+
+                        <!-- AI Settings Dashboard -->
+                        <div class="mt-6 p-4 bg-purple-50 rounded-xl shadow-sm border border-purple-200">
+                            <h3 class="text-lg font-bold text-purple-800 flex items-center space-x-2">
+                                <span>🤖</span>
+                                <span>
+                                    <span class="lang-id">Pengaturan AI (Fase 1)</span>
+                                    <span class="lang-en">AI Settings (Phase 1)</span>
+                                </span>
+                            </h3>
+                            <p class="text-sm text-purple-700 mt-1">
+                                <span class="lang-id">Masukkan API Key Gemini Anda untuk mengaktifkan fitur koreksi tata
+                                    bahasa dan penilaian otomatis.</span>
+                                <span class="lang-en">Enter your Gemini API Key to enable grammar correction and
+                                    auto-grading features.</span>
                             </p>
-                            <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+                            <div class="mt-3 flex items-center space-x-2">
+                                <input type="password" id="gemini-api-key-input"
+                                    class="w-full max-w-md p-2 border border-purple-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                                    placeholder="AIzaSy...">
+                                <button id="save-api-key-btn"
+                                    class="bg-purple-600 text-white text-sm font-bold py-2 px-4 rounded-md hover:bg-purple-700 transition-colors">
+                                    <span class="lang-id">Simpan Kunci</span>
+                                    <span class="lang-en">Save Key</span>
+                                </button>
+                            </div>
+                            <p id="api-key-status" class="text-xs text-green-600 mt-2 hidden">
+                                <span class="lang-id">✔ Kunci API tersimpan di browser Anda.</span>
+                                <span class="lang-en">✔ API Key saved to your browser.</span>
+                            </p>
+                        </div>
+
+                        <div class="mt-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="p-3 font-semibold">
+                                            <span class="lang-id">Nama Siswa</span>
+                                            <span class="lang-en">Name</span>
+                                        </th>
+                                        <th class="p-3 font-semibold">
+                                            <span class="lang-id">Kelas</span>
+                                            <span class="lang-en">Class</span>
+                                        </th>
+                                        <th class="p-3 font-semibold">
+                                            <span class="lang-id">Unit</span>
+                                            <span class="lang-en">Unit</span>
+                                        </th>
+                                        <th class="p-3 font-semibold">
+                                            <span class="lang-id">Aktivitas</span>
+                                            <span class="lang-en">Activity</span>
+                                        </th>
+                                        <th class="p-3 font-semibold">XP</th>
+                                        <th class="p-3 font-semibold">Streak</th>
+                                        <th class="p-3 font-semibold">
+                                            <span class="lang-id">Nilai</span>
+                                            <span class="lang-en">Grade</span>
+                                        </th>
+                                        <th class="p-3 font-semibold">
+                                            <span class="lang-id">Komentar</span>
+                                            <span class="lang-en">Comments</span>
+                                        </th>
+                                        <th class="p-3"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="teacher-report-body" class="divide-y"></tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4 flex space-x-2">
+                            <button id="add-report-entry-btn"
+                                class="bg-[#78C800] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#58a700]">
+                                <span class="lang-id">Tambah Entri</span>
+                                <span class="lang-en">Add Entry</span>
+                            </button>
+                            <button id="save-report-btn"
+                                class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">
+                                <span>💾</span>
+                                <span>
+                                    <span class="lang-id">Simpan Laporan</span>
+                                    <span class="lang-en">Save Report</span>
+                                </span>
+                            </button>
+                        </div>
+                        <div id="pre-post-test-dashboard" class="mt-12">
+                            <h3 class="text-xl md:text-2xl font-bold text-gray-700">
+                                <span class="lang-id">Dashboard Skor Pre-Test & Post-Test</span>
+                                <span class="lang-en">Pre-Test & Post-Test Score Dashboard</span>
+                            </h3>
+                            <div class="mt-4 p-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
                                 <table class="w-full text-left">
                                     <thead class="bg-gray-50">
                                         <tr>
@@ -800,18 +987,12 @@
                                                 <span class="lang-en">Class</span>
                                             </th>
                                             <th class="p-3 font-semibold">
-                                                <span class="lang-id">Unit</span>
-                                                <span class="lang-en">Unit</span>
+                                                <span class="lang-id">Tipe Tes</span>
+                                                <span class="lang-en">Test Type</span>
                                             </th>
                                             <th class="p-3 font-semibold">
-                                                <span class="lang-id">Aktivitas</span>
-                                                <span class="lang-en">Activity</span>
-                                            </th>
-                                            <th class="p-3 font-semibold">XP</th>
-                                            <th class="p-3 font-semibold">Streak</th>
-                                            <th class="p-3 font-semibold">
-                                                <span class="lang-id">Nilai</span>
-                                                <span class="lang-en">Grade</span>
+                                                <span class="lang-id">Skor</span>
+                                                <span class="lang-en">Score</span>
                                             </th>
                                             <th class="p-3 font-semibold">
                                                 <span class="lang-id">Komentar</span>
@@ -820,147 +1001,109 @@
                                             <th class="p-3"></th>
                                         </tr>
                                     </thead>
-                                    <tbody id="teacher-report-body" class="divide-y"></tbody>
+                                    <tbody id="pre-post-test-body" class="divide-y"></tbody>
                                 </table>
                             </div>
                             <div class="mt-4 flex space-x-2">
-                                <button id="add-report-entry-btn" class="bg-[#78C800] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#58a700]">
+                                <button id="add-pre-post-test-entry-btn"
+                                    class="bg-[#78C800] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#58a700]">
                                     <span class="lang-id">Tambah Entri</span>
                                     <span class="lang-en">Add Entry</span>
                                 </button>
-                                <button id="save-report-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">
+                                <button id="save-pre-post-test-btn"
+                                    class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">
                                     <span>💾</span>
                                     <span>
-                                        <span class="lang-id">Simpan Laporan</span>
-                                        <span class="lang-en">Save Report</span>
+                                        <span class="lang-id">Simpan Skor Tes</span>
+                                        <span class="lang-en">Save Test Scores</span>
                                     </span>
                                 </button>
                             </div>
-                            <div id="pre-post-test-dashboard" class="mt-12">
-                                <h3 class="text-xl md:text-2xl font-bold text-gray-700">
-                                    <span class="lang-id">Dashboard Skor Pre-Test & Post-Test</span>
-                                    <span class="lang-en">Pre-Test & Post-Test Score Dashboard</span>
-                                </h3>
-                                <div class="mt-4 p-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
-                                    <table class="w-full text-left">
-                                        <thead class="bg-gray-50">
-                                            <tr>
-                                                <th class="p-3 font-semibold">
-                                                    <span class="lang-id">Nama Siswa</span>
-                                                    <span class="lang-en">Name</span>
-                                                </th>
-                                                <th class="p-3 font-semibold">
-                                                    <span class="lang-id">Kelas</span>
-                                                    <span class="lang-en">Class</span>
-                                                </th>
-                                                <th class="p-3 font-semibold">
-                                                    <span class="lang-id">Tipe Tes</span>
-                                                    <span class="lang-en">Test Type</span>
-                                                </th>
-                                                <th class="p-3 font-semibold">
-                                                    <span class="lang-id">Skor</span>
-                                                    <span class="lang-en">Score</span>
-                                                </th>
-                                                <th class="p-3 font-semibold">
-                                                    <span class="lang-id">Komentar</span>
-                                                    <span class="lang-en">Comments</span>
-                                                </th>
-                                                <th class="p-3"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="pre-post-test-body" class="divide-y"></tbody>
-                                    </table>
-                                </div>
-                                <div class="mt-4 flex space-x-2">
-                                    <button id="add-pre-post-test-entry-btn" class="bg-[#78C800] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#58a700]">
-                                        <span class="lang-id">Tambah Entri</span>
-                                        <span class="lang-en">Add Entry</span>
-                                    </button>
-                                    <button id="save-pre-post-test-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">
-                                        <span>💾</span>
-                                        <span>
-                                            <span class="lang-id">Simpan Skor Tes</span>
-                                            <span class="lang-en">Save Test Scores</span>
-                                        </span>
-                                    </button>
-                                </div>
+                        </div>
+                        <div id="motivation-dashboard" class="mt-12">
+                            <h3 class="text-xl md:text-2xl font-bold text-gray-700">
+                                <span class="lang-id">Dashboard Skor Motivasi</span>
+                                <span class="lang-en">Motivation Score Dashboard</span>
+                            </h3>
+                            <div class="mt-4 p-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="p-3 font-semibold">
+                                                <span class="lang-id">Nama Siswa</span>
+                                                <span class="lang-en">Name</span>
+                                            </th>
+                                            <th class="p-3 font-semibold">
+                                                <span class="lang-id">Kelas</span>
+                                                <span class="lang-en">Class</span>
+                                            </th>
+                                            <th class="p-3 font-semibold">
+                                                <span class="lang-id">Skor (1-5)</span>
+                                                <span class="lang-en">Score (1-5)</span>
+                                            </th>
+                                            <th class="p-3 font-semibold">
+                                                <span class="lang-id">Komentar</span>
+                                                <span class="lang-en">Comments</span>
+                                            </th>
+                                            <th class="p-3"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="motivation-body" class="divide-y"></tbody>
+                                </table>
                             </div>
-                            <div id="motivation-dashboard" class="mt-12">
-                                <h3 class="text-xl md:text-2xl font-bold text-gray-700">
-                                    <span class="lang-id">Dashboard Skor Motivasi</span>
-                                    <span class="lang-en">Motivation Score Dashboard</span>
-                                </h3>
-                                <div class="mt-4 p-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
-                                    <table class="w-full text-left">
-                                        <thead class="bg-gray-50">
-                                            <tr>
-                                                <th class="p-3 font-semibold">
-                                                    <span class="lang-id">Nama Siswa</span>
-                                                    <span class="lang-en">Name</span>
-                                                </th>
-                                                <th class="p-3 font-semibold">
-                                                    <span class="lang-id">Kelas</span>
-                                                    <span class="lang-en">Class</span>
-                                                </th>
-                                                <th class="p-3 font-semibold">
-                                                    <span class="lang-id">Skor (1-5)</span>
-                                                    <span class="lang-en">Score (1-5)</span>
-                                                </th>
-                                                <th class="p-3 font-semibold">
-                                                    <span class="lang-id">Komentar</span>
-                                                    <span class="lang-en">Comments</span>
-                                                </th>
-                                                <th class="p-3"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="motivation-body" class="divide-y"></tbody>
-                                    </table>
-                                </div>
-                                <div class="mt-4 flex space-x-2">
-                                    <button id="add-motivation-entry-btn" class="bg-[#78C800] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#58a700]">
-                                        <span class="lang-id">Tambah Entri</span>
-                                        <span class="lang-en">Add Entry</span>
-                                    </button>
-                                    <button id="save-motivation-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">
-                                        <span>💾</span>
-                                        <span>
-                                            <span class="lang-id">Simpan Skor Motivasi</span>
-                                            <span class="lang-en">Save Motivation Scores</span>
-                                        </span>
-                                    </button>
-                                </div>
+                            <div class="mt-4 flex space-x-2">
+                                <button id="add-motivation-entry-btn"
+                                    class="bg-[#78C800] text-white font-bold py-2 px-4 rounded-lg hover:bg-[#58a700]">
+                                    <span class="lang-id">Tambah Entri</span>
+                                    <span class="lang-en">Add Entry</span>
+                                </button>
+                                <button id="save-motivation-btn"
+                                    class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">
+                                    <span>💾</span>
+                                    <span>
+                                        <span class="lang-id">Simpan Skor Motivasi</span>
+                                        <span class="lang-en">Save Motivation Scores</span>
+                                    </span>
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
-            </main>
-        </div>
-        <!-- UI Elements -->
-        <div id="toast" class="fixed bottom-5 right-5 bg-gray-800 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transform translate-y-2"></div>
-        <div id="teacher-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" style="display: none;">
-            <div class="bg-white rounded-lg p-6 shadow-xl w-full max-w-sm">
-                <h3 class="text-lg font-bold">
-                    <span class="lang-id">Mode Guru</span>
-                    <span class="lang-en">Teacher Mode</span>
-                </h3>
-                <p class="text-sm text-gray-600 mt-2">
-                    <span class="lang-id">Masukkan kode akses untuk melihat bagian tambahan.</span>
-                    <span class="lang-en">Enter the access code to view extra sections.</span>
-                </p>
-                <input type="password" id="teacher-password-input" class="w-full p-2 border rounded mt-4" placeholder="Kode Akses / Access Code">
-                <div class="mt-4 flex justify-end space-x-2">
-                    <button id="cancel-teacher-modal" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
-                        <span class="lang-id">Batal</span>
-                        <span class="lang-en">Cancel</span>
-                    </button>
-                    <button id="submit-teacher-password" class="px-4 py-2 bg-[#78C800] text-white rounded hover:bg-[#58a700]">
-                        <span class="lang-id">Masuk</span>
-                        <span class="lang-en">Enter</span>
-                    </button>
-                </div>
+            </div>
+        </main>
+    </div>
+    <!-- UI Elements -->
+    <div id="toast"
+        class="fixed bottom-5 right-5 bg-gray-800 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transform translate-y-2">
+    </div>
+    <div id="teacher-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+        style="display: none;">
+        <div class="bg-white rounded-lg p-6 shadow-xl w-full max-w-sm">
+            <h3 class="text-lg font-bold">
+                <span class="lang-id">Mode Guru</span>
+                <span class="lang-en">Teacher Mode</span>
+            </h3>
+            <p class="text-sm text-gray-600 mt-2">
+                <span class="lang-id">Masukkan kode akses untuk melihat bagian tambahan.</span>
+                <span class="lang-en">Enter the access code to view extra sections.</span>
+            </p>
+            <input type="password" id="teacher-password-input" class="w-full p-2 border rounded mt-4"
+                placeholder="Kode Akses / Access Code">
+            <div class="mt-4 flex justify-end space-x-2">
+                <button id="cancel-teacher-modal" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
+                    <span class="lang-id">Batal</span>
+                    <span class="lang-en">Cancel</span>
+                </button>
+                <button id="submit-teacher-password"
+                    class="px-4 py-2 bg-[#78C800] text-white rounded hover:bg-[#58a700]">
+                    <span class="lang-id">Masuk</span>
+                    <span class="lang-en">Enter</span>
+                </button>
             </div>
         </div>
-        <!-- Main Application Logic -->
-        <script src="app.js" defer></script>
-    </body>
+    </div>
+    <!-- Main Application Logic -->
+    <script src="app.js" defer></script>
+</body>
+
 </html>
