@@ -177,7 +177,18 @@ graph LR
 
 ---
 
-## 7. Future Considerations
+## 7. MVP Data Utilization Strategy (Pre-Test & Post-Test)
+
+Leveraging existing MVP data from real users allows for immediate validation and accelerated development of analytical features:
+
+1. **Visual Analytics Dashboard:** Immediately build the Teacher Report Dashboard (Section 3.2) using existing data to visualize individual growth (pre vs. post-test) and class-wide trends via Chart.js.
+2. **AI Pre/Post-Test Analytics:** Use MVP data to build and test the prompt logic for AI-generated insights (Section 6.3). The AI will provide personalized commentary (e.g., specific student weaknesses) and class-wide insights.
+3. **Prompt Fine-Tuning:** Utilize the dataset as a reliable benchmark to systematically test and refine AI prompts, ensuring pedagogical feedback is high-quality and teacher-like.
+4. **Adaptive Learning Jumpstart:** Analyze patterns in the MVP data (e.g., commonly failed topics) to begin designing the rules and logic for the Smart Unit Recommendations (Section 6.2).
+
+---
+
+## 8. Future Considerations
 
 - [ ] Individual student login with proper authentication
 - [ ] Offline mode with service worker caching
